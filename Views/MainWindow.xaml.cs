@@ -12,6 +12,9 @@ namespace BackItUp.Views
         public MainWindow()
         {
             InitializeComponent();
+            var viewModel = new BackupInfoViewModel();
+            this.DataContext = viewModel;
+            this.Show();
         }
 
         private void stateChanged(object sender, EventArgs e)

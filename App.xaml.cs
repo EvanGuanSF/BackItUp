@@ -1,5 +1,4 @@
-﻿using BackItUp.ViewModels;
-using BackItUp.Views;
+﻿using BackItUp.Views;
 using System.Windows;
 
 namespace BackItUp
@@ -14,10 +13,7 @@ namespace BackItUp
             base.OnStartup(e);
 
             // Initialize main window and view model
-            var mainWindow = new MainWindow();
-            var viewModel = new BackupInfoViewModel();
-            mainWindow.DataContext = viewModel;
-            mainWindow.Show();
+            new MainWindow();
         }
     }
 }

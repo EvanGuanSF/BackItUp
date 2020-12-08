@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace BackItUp.Models
 {
@@ -15,7 +16,7 @@ namespace BackItUp.Models
             set
             {
                 _OriginPath = value;
-                OnPropertyChanged("OriginPath");
+                OnPropertyChanged("OriginPath", value.ToString());
             }
         }
 
@@ -29,7 +30,7 @@ namespace BackItUp.Models
             set
             {
                 _BackupPath = value;
-                OnPropertyChanged("BackupPath");
+                OnPropertyChanged("BackupPath", value.ToString());
             }
         }
 
@@ -43,26 +44,12 @@ namespace BackItUp.Models
             set
             {
                 _LastBackupDate = value;
-                OnPropertyChanged("LastBackupDate");
+                OnPropertyChanged("LastBackupDate", value.ToString());
             }
         }
 
-        private string _BackupFrequencyMult;
-        public string BackupFrequencyMult
-        {
-            get
-            {
-                return _BackupFrequencyMult;
-            }
-            set
-            {
-                _BackupFrequencyMult = value;
-                OnPropertyChanged("BackupFrequencyMult");
-            }
-        }
-
-        private string _BackupFrequency;
-        public string BackupFrequency
+        private int _BackupFrequency;
+        public int BackupFrequency
         {
             get
             {
@@ -70,8 +57,41 @@ namespace BackItUp.Models
             }
             set
             {
-                _BackupFrequency = value;
-                OnPropertyChanged("BackupFrequency");
+                int temp = 1;
+                try
+                {
+                    temp = (int)value;
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+
+                _BackupFrequency = temp;
+                OnPropertyChanged("BackupFrequency", value.ToString());
+            }
+        }
+
+        private int _BackupPeriod;
+        public int BackupPeriod
+        {
+            get
+            {
+                return _BackupPeriod;
+            }
+            set
+            {
+                int temp = 1;
+                try
+                {
+                    temp = (int)value;
+                } catch (Exception e)
+                {
+                    Debug.WriteLine(e.Message);
+                }
+
+                _BackupPeriod = temp;
+                OnPropertyChanged("BackupPeriod", value.ToString());
             }
         }
 
@@ -85,7 +105,7 @@ namespace BackItUp.Models
             set
             {
                 _NextBackupDate = value;
-                OnPropertyChanged("NextBackupDate");
+                OnPropertyChanged("NextBackupDate", value.ToString());
             }
         }
 
@@ -99,7 +119,7 @@ namespace BackItUp.Models
             set
             {
                 _BackupEnabled = value;
-                OnPropertyChanged("BackupEnabled");
+                OnPropertyChanged("BackupEnabled", value.ToString());
             }
         }
 
@@ -108,8 +128,8 @@ namespace BackItUp.Models
             OriginPath = "";
             BackupPath = "";
             LastBackupDate = DateTime.Now;
-            BackupFrequency = "";
-            BackupFrequencyMult = "";
+            BackupPeriod = 1;
+            BackupFrequency = 1;
             NextBackupDate = DateTime.Now.AddDays(1);
             BackupEnabled = true;
         }
@@ -118,10 +138,13 @@ namespace BackItUp.Models
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string propertyName)
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-            }
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            Debug.WriteLine(string.Format("BackupInfo {0} Updated.", propertyName));
+        }
+        private void OnPropertyChanged(string propertyName, string newVal)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            Debug.WriteLine(string.Format("BackupInfo {0} Updated to {1}.", propertyName, newVal));
         }
         #endregion
     }

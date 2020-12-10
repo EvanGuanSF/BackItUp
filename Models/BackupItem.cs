@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace BackItUp.Models
 {
-    public class BackupInfo : INotifyPropertyChanged
+    public class BackupItem : INotifyPropertyChanged
     {
         private string _OriginPath;
         public string OriginPath
@@ -123,7 +123,7 @@ namespace BackItUp.Models
             }
         }
 
-        public BackupInfo()
+        public BackupItem()
         {
             OriginPath = "";
             BackupPath = "";
@@ -139,12 +139,12 @@ namespace BackItUp.Models
         private void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            Debug.WriteLine(string.Format("BackupInfo {0} Updated.", propertyName));
+            //Debug.WriteLine(string.Format("BackupInfo {0} Updated.", propertyName));
         }
         private void OnPropertyChanged(string propertyName, string newVal)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            Debug.WriteLine(string.Format("BackupInfo {0} Updated to {1}.", propertyName, newVal));
+            //Debug.WriteLine(string.Format("BackupInfo {0} Updated to {1}.", propertyName, newVal));
         }
         #endregion
     }

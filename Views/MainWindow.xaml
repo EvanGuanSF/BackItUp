@@ -4,6 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vc="clr-namespace:BackItUp.ViewModels.ValueConverters" 
         mc:Ignorable="d"
         Title="Back It Up" Height="900" Width="1600"
         WindowStartupLocation="CenterScreen"
@@ -12,6 +13,9 @@
         >
 
     <Window.Resources>
+        <!-- Value Converters -->
+        <vc:IgnoreNewItemPlaceHolderConverter x:Key="ignoreNewItemPlaceHolderConverter"/>
+        
         <!-- DataGrid style -->
         <Style TargetType="{x:Type DataGrid}">
             <Setter Property="RowHeaderWidth" Value="0" />
@@ -19,22 +23,49 @@
 
     </Window.Resources>
     
-    <Grid Margin="5">
+    <Grid Margin="5" Background="White">
         <!-- Row Settings -->
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
+        <Grid Margin="0, 0, 0, 5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Label Content="Backup List" FontWeight="Bold" FontSize="20"/>
+
+            <!-- Delete selected backup job -->
+            <Button
+                x:Name="removeBackupItemButton"
+                Content="Remove Selected Item"
+                BorderThickness="2"
+                Margin="0, 5, 0, 5"
+                Command="{Binding DeleteItemCommand}"
+                HorizontalAlignment="Right"
+                Grid.Column="2"/>
+        </Grid>
+
         <!-- Backup configuration datagrid -->
-        <DataGrid x:Name="backupGrid"
-                  Grid.Row="0"
-                  SelectionMode="Single"
-                  ItemsSource="{Binding Path=BackupInfo}"
-                  CanUserAddRows="True"
-                  AutoGenerateColumns="False"
-                  CanUserResizeColumns="False"
-                  CanUserReorderColumns="False">
+        <DataGrid
+            x:Name="backupGrid"
+            Grid.Row="1"
+            SelectionMode="Single"
+            ItemsSource="{Binding Path=BackupInfo}"
+            SelectedItem="{Binding RelativeSource={
+                           RelativeSource FindAncestor, 
+                           AncestorType={x:Type Window}},
+                           Path=DataContext.SelectedBackupItem,
+                           Converter={StaticResource ignoreNewItemPlaceHolderConverter}}"
+            CanUserAddRows="True"
+            AutoGenerateColumns="False"
+            CanUserResizeColumns="False"
+            CanUserReorderColumns="False">
 
             <DataGrid.Columns>
                 <!-- Path to source file/folder -->
@@ -73,9 +104,10 @@
                     IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <DatePicker Name="lastBackupDate"
-                                        SelectedDate="{Binding LastBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        DisplayDateStart="{x:Static sys:DateTime.Now}">
+                            <DatePicker
+                                Name="lastBackupDate"
+                                SelectedDate="{Binding LastBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DisplayDateStart="{x:Static sys:DateTime.Now}">
                                 <DatePicker.Resources>
                                     <Style TargetType="DatePickerTextBox">
                                         <Setter Property="IsReadOnly" Value="True"/>
@@ -144,9 +176,10 @@
                     Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <DatePicker Name="lastBackupDate"
-                                        SelectedDate="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                        DisplayDateStart="{x:Static sys:DateTime.Now}">
+                            <DatePicker
+                                Name="lastBackupDate"
+                                SelectedDate="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                DisplayDateStart="{x:Static sys:DateTime.Now}">
                                 <DatePicker.Resources>
                                     <Style TargetType="DatePickerTextBox">
                                         <Setter Property="IsReadOnly" Value="True"/>
@@ -181,21 +214,11 @@
                     </DataGridCheckBoxColumn.ElementStyle>
                 </DataGridCheckBoxColumn>
 
-                <!-- Delete this backup job -->
-                <DataGridTemplateColumn
-                    Width="Auto">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Button x:Name="removeBackupItemButton" Content="Remove"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Grid for holding configuration buttons -->
-        <Grid VerticalAlignment="Bottom" Grid.Row="1">
+        <Grid VerticalAlignment="Bottom" Grid.Row="2">
             <!-- Row Settings -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
@@ -207,11 +230,11 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
             <!-- Configuration buttons -->
-            <Button x:Name="ApplyConfigButton" Grid.Row="1" Grid.Column="0" Margin="0, 5, 5, 0" Content="Apply Settings"/>
-            <Button x:Name="SaveConfigButton" Grid.Row="1" Grid.Column="1" Margin="5, 5, 5, 0" Content="Save Settings"/>
+            <Button x:Name="SaveApplyConfigButton" Grid.Row="1" Grid.Column="1" Margin="0, 5, 5, 0" Content="Save and Apply Settings"/>
             <Button x:Name="LoadConfigButton" Grid.Row="1" Grid.Column="2" Margin="5, 5, 5, 0" Content="Load Settings"/>
             <Button x:Name="ResetConfigButton" Grid.Row="1" Grid.Column="3" Margin="5, 5, 0, 0" Content="Reset Settings"/>
         </Grid>

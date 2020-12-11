@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vc="clr-namespace:BackItUp.ViewModels.ValueConverters" 
+        xmlns:local="clr-namespace:BackItUp.ViewModels"
         mc:Ignorable="d"
         Title="Back It Up" Height="900" Width="1600"
         WindowStartupLocation="CenterScreen"
@@ -15,6 +16,9 @@
     <Window.Resources>
         <!-- Value Converters -->
         <vc:IgnoreNewItemPlaceHolderConverter x:Key="ignoreNewItemPlaceHolderConverter"/>
+        
+        <!-- Validation -->
+        
         
         <!-- DataGrid style -->
         <Style TargetType="{x:Type DataGrid}">
@@ -56,11 +60,14 @@
             x:Name="backupGrid"
             Grid.Row="1"
             SelectionMode="Single"
+            SelectionUnit="FullRow"
+            IsSynchronizedWithCurrentItem="True"
             ItemsSource="{Binding Path=BackupInfo}"
-            SelectedItem="{Binding RelativeSource={
+            SelectedIndex="{Binding RelativeSource={
                            RelativeSource FindAncestor, 
                            AncestorType={x:Type Window}},
-                           Path=DataContext.SelectedBackupItem,
+                           Path=DataContext.SelectedBackupItemIndex,
+                           UpdateSourceTrigger=PropertyChanged,
                            Converter={StaticResource ignoreNewItemPlaceHolderConverter}}"
             CanUserAddRows="True"
             AutoGenerateColumns="False"
@@ -72,28 +79,38 @@
                 <DataGridTextColumn
                     x:Name="originPath"
                     Header="Origin Path"
-                    Binding="{Binding OriginPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Width="5*"
+                    Binding="{Binding OriginPath, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
+                    Width="7*"
                     IsReadOnly="False">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="ToolTip" Value="Path to source file/folder" />
                         </Style>
                     </DataGridTextColumn.CellStyle>
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
                 <!-- Path to destination folder -->
                 <DataGridTextColumn
                     x:Name="backupPath"
                     Header="Backup Path"
-                    Binding="{Binding BackupPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Width="5*"
+                    Binding="{Binding BackupPath, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
+                    Width="7*"
                     IsReadOnly="False">
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="ToolTip" Value="Path to destination folder" />
                         </Style>
                     </DataGridTextColumn.CellStyle>
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
 
                 <!-- Date last backed up -->
@@ -127,7 +144,7 @@
                 <DataGridTextColumn
                     x:Name="backupFrequencyMult"
                     Header="Frequency"
-                    Binding="{Binding BackupFrequency, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Binding="{Binding BackupFrequency, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
                     CanUserSort="False"
                     Width="*">
                     <DataGridTextColumn.CellStyle>
@@ -137,10 +154,14 @@
                     </DataGridTextColumn.CellStyle>
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
-                            <Setter Property="HorizontalAlignment" Value="Center" />
                             <Setter Property="VerticalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="TextBox">
+                            <Setter Property="MaxLength" Value="3"/>
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
 
                 <!-- Period between backups -->
@@ -178,7 +199,7 @@
                         <DataTemplate>
                             <DatePicker
                                 Name="lastBackupDate"
-                                SelectedDate="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                SelectedDate="{Binding NextBackupDate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                 DisplayDateStart="{x:Static sys:DateTime.Now}">
                                 <DatePicker.Resources>
                                     <Style TargetType="DatePickerTextBox">
@@ -198,7 +219,7 @@
                 <!-- Toggle for backing up this file/folder -->
                 <DataGridCheckBoxColumn
                     x:Name="backupEnabled"
-                    Header="Backup Enabled"
+                    Header="Enabled"
                     Binding="{Binding BackupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     Width="Auto">
                     <DataGridCheckBoxColumn.CellStyle>

@@ -11,7 +11,7 @@ namespace BackItUp.ViewModels
     {
         private ObservableCollection<BackupItem> _BackupInfo;
         private ObservableCollection<BackupPeriodList> _BackupPeriodList;
-        private BackupItem _SelectedBackupItem;
+        private int _SelectedBackupItemIndex;
 
         /// <summary>
         /// Indicates whether or not the datagrid can delete the row.
@@ -20,7 +20,7 @@ namespace BackItUp.ViewModels
         {
             get
             {
-                return _BackupInfo.Count > 0;
+                return _SelectedBackupItemIndex < _BackupInfo.Count;
             }
         }
 
@@ -34,7 +34,6 @@ namespace BackItUp.ViewModels
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
-            _SelectedBackupItem = null;
             DeleteItemCommand = new DeleteBackupItemCommand(this);
         }
 
@@ -69,21 +68,20 @@ namespace BackItUp.ViewModels
         }
 
         /// <summary>
-        /// Getter/setter for the currently selected row of the datagrid.
+        /// Getter/setter for the currently selected row index of the datagrid.
         /// </summary>
-        public BackupItem SelectedBackupItem
+        public int SelectedBackupItemIndex
         {
             get
             {
-                return _SelectedBackupItem;
+                return _SelectedBackupItemIndex;
             }
             set
             {
-                // Set value and trigger updates.
-                _SelectedBackupItem = value;
-                OnPropertyChanged("SelectedBackupItem");
+                _SelectedBackupItemIndex = value;
+                OnPropertyChanged("SelectedBackupItemIndex");
 
-                Debug.WriteLine("New selected row.");
+                Debug.WriteLine("New selected row index: " + _SelectedBackupItemIndex.ToString());
             }
         }
 
@@ -127,8 +125,7 @@ namespace BackItUp.ViewModels
         public void DeleteSelectedBackupItem ()
         {
             // Remove the selected row.
-            var itemToBeRemoved = _SelectedBackupItem;
-            _BackupInfo.Remove(itemToBeRemoved);
+            _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
             // Trigger updates.
             OnPropertyChanged("BackupList");
             OnPropertyChanged("SelectedBackupItem");

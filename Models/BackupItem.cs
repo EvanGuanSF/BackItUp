@@ -1,10 +1,11 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using static BackItUp.Models.Validation.BackupItemValidation;
 
 namespace BackItUp.Models
 {
-    public class BackupItem : INotifyPropertyChanged
+    public class BackupItem : IDataErrorInfo ,INotifyPropertyChanged
     {
         private string _OriginPath;
         public string OriginPath
@@ -48,26 +49,24 @@ namespace BackItUp.Models
             }
         }
 
-        private int _BackupFrequency;
-        public int BackupFrequency
+        private string _BackupFrequency;
+        public string BackupFrequency
         {
             get
             {
-                return _BackupFrequency;
+                return _BackupFrequency.ToString();
             }
             set
             {
-                int temp = 1;
-                try
+                if (value != null &&
+                    value.ToString() == "")
                 {
-                    temp = (int)value;
+                    _BackupFrequency = "";
                 }
-                catch (Exception e)
+                else
                 {
-                    Debug.WriteLine(e.Message);
+                    _BackupFrequency = value.ToString();
                 }
-
-                _BackupFrequency = temp;
                 OnPropertyChanged("BackupFrequency", value.ToString());
             }
         }
@@ -128,8 +127,8 @@ namespace BackItUp.Models
             OriginPath = "";
             BackupPath = "";
             LastBackupDate = DateTime.Now;
+            BackupFrequency = "1";
             BackupPeriod = 1;
-            BackupFrequency = 1;
             NextBackupDate = DateTime.Now.AddDays(1);
             BackupEnabled = true;
         }
@@ -145,6 +144,89 @@ namespace BackItUp.Models
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             //Debug.WriteLine(string.Format("BackupInfo {0} Updated to {1}.", propertyName, newVal));
+        }
+        #endregion
+
+        #region IDataErrorInfo Members
+        string IDataErrorInfo.Error
+        {
+            get
+            {
+                return null;
+            }
+        }
+
+        string IDataErrorInfo.this[string propertyName]
+        {
+            get
+            {
+                return GetValidationError(propertyName);
+            }
+        }
+        #endregion
+
+        #region Validation
+
+        // Holds the names of the properties that need to be validated.
+        static readonly string[] ValidatedProperties =
+        {
+            "OriginPath",
+            "BackupPath",
+            //"LastBackupDate",
+            //"NextBackupDate",
+            "BackupFrequency"
+            //"BackupPeriod",
+            //"BackupEnabled"
+        };
+
+        /// <summary>
+        /// Goes through the properties and checks for all valid.
+        /// Returns true if all properties are valid and false if any is invalid.
+        /// </summary>
+        public bool IsValid
+        {
+            get
+            {
+                foreach (string property in ValidatedProperties)
+                {
+                    if(GetValidationError(property) != null)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Checks the given propery for validity.
+        /// </summary>
+        /// <param name="propertyName"></param>
+        /// <returns></returns>
+        string GetValidationError(string propertyName)
+        {
+            string error = null;
+
+            switch (propertyName)
+            {
+                case "OriginPath":
+                    {
+                        error = ValidateOriginPath(OriginPath, BackupPath);
+                        break;
+                    }
+                case "BackupPath":
+                    {
+                        error = ValidateBackupPath(OriginPath, BackupPath);
+                        break;
+                    }
+                case "BackupFrequency":
+                    {
+                        error = ValidateBackupFrequency(BackupFrequency);
+                        break;
+                    }
+            }
+
+            return error;
         }
         #endregion
     }

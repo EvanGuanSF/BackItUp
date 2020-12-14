@@ -4,8 +4,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vc="clr-namespace:BackItUp.ViewModels.ValueConverters" 
-        xmlns:local="clr-namespace:BackItUp.ViewModels"
+        xmlns:vc="clr-namespace:BackItUp.ViewModels.ValueConverters"
         mc:Ignorable="d"
         Title="Back It Up" Height="900" Width="1600"
         WindowStartupLocation="CenterScreen"
@@ -52,7 +51,8 @@
                 Margin="0, 5, 0, 5"
                 Command="{Binding DeleteItemCommand}"
                 HorizontalAlignment="Right"
-                Grid.Column="2"/>
+                Grid.Column="2"
+                />
         </Grid>
 
         <!-- Backup configuration datagrid -->
@@ -64,54 +64,97 @@
             IsSynchronizedWithCurrentItem="True"
             ItemsSource="{Binding Path=BackupInfo}"
             SelectedIndex="{Binding RelativeSource={
-                           RelativeSource FindAncestor, 
-                           AncestorType={x:Type Window}},
-                           Path=DataContext.SelectedBackupItemIndex,
-                           UpdateSourceTrigger=PropertyChanged,
-                           Converter={StaticResource ignoreNewItemPlaceHolderConverter}}"
+                RelativeSource FindAncestor, 
+                AncestorType={x:Type Window}},
+                Path=DataContext.SelectedBackupItemIndex,
+                UpdateSourceTrigger=PropertyChanged,
+                Converter={StaticResource ignoreNewItemPlaceHolderConverter}}"
             CanUserAddRows="True"
             AutoGenerateColumns="False"
             CanUserResizeColumns="False"
             CanUserReorderColumns="False">
 
             <DataGrid.Columns>
+
                 <!-- Path to source file/folder -->
-                <DataGridTextColumn
+                <DataGridTemplateColumn
                     x:Name="originPath"
                     Header="Origin Path"
-                    Binding="{Binding OriginPath, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
-                    Width="7*"
-                    IsReadOnly="False">
-                    <DataGridTextColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="ToolTip" Value="Path to source file/folder" />
-                        </Style>
-                    </DataGridTextColumn.CellStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                    Width="7*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock 
+                                    Grid.Column="0"
+                                    Text="{Binding OriginPath, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    TextWrapping="Wrap"/>
+                                <Button Grid.Column="1"
+                                        Content="File"
+                                        Margin="5, 0, 5, 0"
+                                        Command="{Binding RelativeSource={
+                                            RelativeSource FindAncestor, 
+                                            AncestorType={x:Type Window}},
+                                            Path=DataContext.SelectOriginFileDialogCmd}"
+                                        HorizontalContentAlignment="Right"></Button>
+                                <Button Grid.Column="2"
+                                        Content="Folder"
+                                        Command="{Binding RelativeSource={
+                                            RelativeSource FindAncestor, 
+                                            AncestorType={x:Type Window}},
+                                            Path=DataContext.SelectOriginFolderDialogCmd}"
+                                        HorizontalContentAlignment="Right"></Button>
+                                <Grid.ToolTip>
+                                    <ToolTip>
+                                        <TextBlock Text="Path to source file/folder"></TextBlock>
+                                    </ToolTip>
+                                </Grid.ToolTip>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Path to destination folder -->
-                <DataGridTextColumn
+                <DataGridTemplateColumn
                     x:Name="backupPath"
                     Header="Backup Path"
-                    Binding="{Binding BackupPath, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
-                    Width="7*"
-                    IsReadOnly="False">
-                    <DataGridTextColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="ToolTip" Value="Path to destination folder" />
-                        </Style>
-                    </DataGridTextColumn.CellStyle>
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
+                    Width="7*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock 
+                                    Grid.Column="0"
+                                    Text="{Binding BackupPath, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left"
+                                    TextWrapping="Wrap"/>
+                                <Button Grid.Column="1"
+                                        Content="Folder"
+                                        Margin="5, 0, 0, 0"
+                                        Command="{Binding RelativeSource={
+                                           RelativeSource FindAncestor, 
+                                           AncestorType={x:Type Window}},
+                                           Path=DataContext.SelectBackupFolderDialogCmd}"
+                                        HorizontalContentAlignment="Right"></Button>
+                                <Grid.ToolTip>
+                                    <ToolTip>
+                                        <TextBlock Text="Path to destination folder"></TextBlock>
+                                    </ToolTip>
+                                </Grid.ToolTip>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
                 <!-- Date last backed up -->
                 <DataGridTemplateColumn
@@ -253,6 +296,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+            
             
             <!-- Configuration buttons -->
             <Button x:Name="SaveApplyConfigButton" Grid.Row="1" Grid.Column="1" Margin="0, 5, 5, 0" Content="Save and Apply Settings"/>

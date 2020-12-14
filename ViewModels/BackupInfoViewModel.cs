@@ -1,8 +1,10 @@
 ﻿using BackItUp.Models;
 using BackItUp.ViewModels.Commands;
+using Ookii.Dialogs.Wpf;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Windows.Input;
 
 namespace BackItUp.ViewModels
@@ -34,7 +36,10 @@ namespace BackItUp.ViewModels
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
-            DeleteItemCommand = new DeleteBackupItemCommand(this);
+            DeleteItemCmd = new DeleteBackupItemCommand(this);
+            SelectOriginFileDialogCmd = new SelectOriginFileDialogCommand(this);
+            SelectOriginFolderDialogCmd = new SelectOriginFolderDialogCommand(this);
+            SelectBackupFolderDialogCmd = new SelectBackupFolderDialogCommand(this);
         }
 
         /// <summary>
@@ -87,7 +92,10 @@ namespace BackItUp.ViewModels
 
         #region Commands
 
-        public ICommand DeleteItemCommand { get; set; }
+        public ICommand DeleteItemCmd { get; set; }
+        public ICommand SelectOriginFileDialogCmd { get; set; }
+        public ICommand SelectOriginFolderDialogCmd { get; set; }
+        public ICommand SelectBackupFolderDialogCmd { get; set; }
 
         #endregion
 
@@ -121,7 +129,98 @@ namespace BackItUp.ViewModels
         }
         #endregion
 
+        #region Command Helper Methods
+
+        /// <summary>
+        /// Launch a dialog window so that the user can select an origin file path.
+        /// </summary>
+        public void GetNewOriginFilePath()
+        {
+            //Debug.WriteLine("GetOriginFilePath");
+            //Debug.WriteLine(string.Format("Count: {0} Index: {1}", BackupInfo.Count, SelectedBackupItemIndex));
+
+            string filePath = ShowSelectOriginFileDialog();
+
+            if (!File.Exists(filePath))
+                return;
+
+            if (BackupInfo.Count == 0)
+            {
+                BackupInfo.Add(new BackupItem());
+                SelectedBackupItemIndex = 0;
+            }
+            else if (BackupInfo.Count == SelectedBackupItemIndex)
+            {
+                BackupInfo.Add(new BackupItem());
+                SelectedBackupItemIndex = BackupInfo.Count - 1;
+            }
+
+            BackupInfo[SelectedBackupItemIndex].OriginPath = filePath;
+            Debug.WriteLine(filePath);
+        }
+
+        /// <summary>
+        /// Launch a dialog window so that the user can select an origin folder path.
+        /// </summary>
+        public void GetNewOriginFolderPath()
+        {
+            //Debug.WriteLine("GetOriginFolderPath");
+            //Debug.WriteLine(string.Format("Count: {0} Index: {1}", BackupInfo.Count, SelectedBackupItemIndex));
+
+            string folderPath = ShowSelectPathDialog();
+
+            if (!Directory.Exists(folderPath))
+                return;
+
+            if (BackupInfo.Count == 0)
+            {
+                BackupInfo.Add(new BackupItem());
+                SelectedBackupItemIndex = 0;
+            }
+            else if (BackupInfo.Count == SelectedBackupItemIndex)
+            {
+                BackupInfo.Add(new BackupItem());
+                SelectedBackupItemIndex = BackupInfo.Count - 1;
+            }
+
+            BackupInfo[SelectedBackupItemIndex].OriginPath = folderPath;
+            Debug.WriteLine(folderPath);
+        }
+
+        /// <summary>
+        /// Launch a dialog window so that the user can select a destination folder path.
+        /// </summary>
+        public void GetNewBackupFolderPath()
+        {
+            //Debug.WriteLine("GetBackupFolderPath");
+            //Debug.WriteLine(string.Format("Count: {0} Index: {1}", BackupInfo.Count, SelectedBackupItemIndex));
+
+            string folderPath = ShowSelectPathDialog();
+
+            if (!Directory.Exists(folderPath))
+                return;
+
+            if (BackupInfo.Count == 0)
+            {
+                BackupInfo.Add(new BackupItem());
+                SelectedBackupItemIndex = 0;
+            }
+            else if (BackupInfo.Count == SelectedBackupItemIndex)
+            {
+                BackupInfo.Add(new BackupItem());
+                SelectedBackupItemIndex = BackupInfo.Count - 1;
+            }
+
+            BackupInfo[SelectedBackupItemIndex].BackupPath = folderPath;
+            Debug.WriteLine(folderPath);
+        }
+
+        #endregion
+
         #region UI Business logic
+        /// <summary>
+        /// Delete the selected BackupInfo item from the collection if appicable.
+        /// </summary>
         public void DeleteSelectedBackupItem ()
         {
             // Remove the selected row.
@@ -131,6 +230,39 @@ namespace BackItUp.ViewModels
             OnPropertyChanged("SelectedBackupItem");
 
             Debug.WriteLine("Delete command has been executed.");
+        }
+
+        /// <summary>
+        /// Launches a select file dialog and returns the selected path.
+        /// </summary>
+        /// <returns></returns>
+        private string ShowSelectOriginFileDialog()
+        {
+            VistaOpenFileDialog selectFileDialog = new VistaOpenFileDialog();
+            selectFileDialog.Multiselect = false;
+            selectFileDialog.ValidateNames = true;
+            selectFileDialog.AddExtension = true;
+            selectFileDialog.CheckFileExists = true;
+            selectFileDialog.CheckPathExists = true;
+            selectFileDialog.Title = "Select a file";
+            selectFileDialog.ShowDialog();
+
+            return selectFileDialog.FileName;
+        }
+
+        /// <summary>
+        /// Launch a dialog window so that the user can select a path.
+        /// </summary>
+        private string ShowSelectPathDialog()
+        {
+            VistaFolderBrowserDialog selectFolderDialog = new VistaFolderBrowserDialog();
+            selectFolderDialog.Description = "Select a path";
+            selectFolderDialog.UseDescriptionForTitle = true;
+            selectFolderDialog.ShowDialog();
+
+            Debug.WriteLine(selectFolderDialog.SelectedPath);
+
+            return selectFolderDialog.SelectedPath;
         }
 
         #endregion

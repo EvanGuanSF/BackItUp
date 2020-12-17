@@ -1,5 +1,6 @@
 ﻿using BackItUp.Models;
 using BackItUp.ViewModels.Commands;
+using BackItUp.ViewModels.HelperMethods;
 using Ookii.Dialogs.Wpf;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -37,6 +38,7 @@ namespace BackItUp.ViewModels
             InitBackupPeriodList();
             // Prep the commands for use.
             DeleteItemCmd = new DeleteBackupItemCommand(this);
+            AddItemCmd = new AddBackupItemCommand(this);
             SelectOriginFileDialogCmd = new SelectOriginFileDialogCommand(this);
             SelectOriginFolderDialogCmd = new SelectOriginFolderDialogCommand(this);
             SelectBackupFolderDialogCmd = new SelectBackupFolderDialogCommand(this);
@@ -93,6 +95,7 @@ namespace BackItUp.ViewModels
         #region Commands
 
         public ICommand DeleteItemCmd { get; set; }
+        public ICommand AddItemCmd { get; set; }
         public ICommand SelectOriginFileDialogCmd { get; set; }
         public ICommand SelectOriginFolderDialogCmd { get; set; }
         public ICommand SelectBackupFolderDialogCmd { get; set; }
@@ -144,18 +147,12 @@ namespace BackItUp.ViewModels
             if (!File.Exists(filePath))
                 return;
 
-            if (BackupInfo.Count == 0)
-            {
-                BackupInfo.Add(new BackupItem());
-                SelectedBackupItemIndex = 0;
-            }
-            else if (BackupInfo.Count == SelectedBackupItemIndex)
-            {
-                BackupInfo.Add(new BackupItem());
-                SelectedBackupItemIndex = BackupInfo.Count - 1;
-            }
+            UpdateIndices();
 
             BackupInfo[SelectedBackupItemIndex].OriginPath = filePath;
+
+            UpdateItemHash();
+
             Debug.WriteLine(filePath);
         }
 
@@ -172,18 +169,12 @@ namespace BackItUp.ViewModels
             if (!Directory.Exists(folderPath))
                 return;
 
-            if (BackupInfo.Count == 0)
-            {
-                BackupInfo.Add(new BackupItem());
-                SelectedBackupItemIndex = 0;
-            }
-            else if (BackupInfo.Count == SelectedBackupItemIndex)
-            {
-                BackupInfo.Add(new BackupItem());
-                SelectedBackupItemIndex = BackupInfo.Count - 1;
-            }
+            UpdateIndices();
 
             BackupInfo[SelectedBackupItemIndex].OriginPath = folderPath;
+
+            UpdateItemHash();
+
             Debug.WriteLine(folderPath);
         }
 
@@ -200,6 +191,17 @@ namespace BackItUp.ViewModels
             if (!Directory.Exists(folderPath))
                 return;
 
+            UpdateIndices();
+
+            BackupInfo[SelectedBackupItemIndex].BackupPath = folderPath;
+
+            UpdateItemHash();
+
+            Debug.WriteLine(folderPath);
+        }
+
+        private void UpdateIndices()
+        {
             if (BackupInfo.Count == 0)
             {
                 BackupInfo.Add(new BackupItem());
@@ -210,27 +212,76 @@ namespace BackItUp.ViewModels
                 BackupInfo.Add(new BackupItem());
                 SelectedBackupItemIndex = BackupInfo.Count - 1;
             }
+        }
 
-            BackupInfo[SelectedBackupItemIndex].BackupPath = folderPath;
-            Debug.WriteLine(folderPath);
+        /// <summary>
+        /// Delete the selected BackupInfo item from the collection if appicable.
+        /// </summary>
+        public void DeleteSelectedBackupItem()
+        {
+            if (_SelectedBackupItemIndex == -1)
+                return;
+
+            // Remove the selected row.
+            _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
+            // Trigger updates.
+            SelectedBackupItemIndex = BackupInfo.Count - 1;
+            OnPropertyChanged("BackupList");
+            OnPropertyChanged("SelectedBackupItem");
+
+            //Debug.WriteLine("Delete command has been executed.");
+        }
+
+        /// <summary>
+        /// Adds a backup item to the backupitem collection.
+        /// </summary>
+        public void AddBackupItem()
+        {
+            BackupInfo.Add(new BackupItem());
+            SelectedBackupItemIndex = BackupInfo.Count - 1;
+        }
+
+        #endregion
+
+        #region Utility Methods
+
+        /// <summary>
+        /// Updates the HashCode for the current item if the origin and backup fields are populated.
+        /// </summary>
+        /// <param name="index"></param>
+        private void UpdateItemHash()
+        {
+            if(!string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].OriginPath) &&
+               !string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].BackupPath))
+            {
+                BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(BackupInfo[_SelectedBackupItemIndex].OriginPath + BackupInfo[_SelectedBackupItemIndex].OriginPath);
+                ReinitializeDuplicateBackups();
+            }
+        }
+
+        /// <summary>
+        /// Resets the current backinfo item if the same hash code already exists (same origin/backup paths as an existing item).
+        /// </summary>
+        /// <param name="newHashCode"></param>
+        private void ReinitializeDuplicateBackups()
+        {
+            if (BackupInfo.Count == 0)
+                return;
+
+            string newHashCode = BackupInfo[BackupInfo.Count - 1].HashCode;
+
+            for (int i = 0; i < BackupInfo.Count - 1; i++)
+            {
+                if(newHashCode == BackupInfo[i].HashCode)
+                {
+                    BackupInfo[_SelectedBackupItemIndex].LoadDefaultValues();
+                }
+            }
         }
 
         #endregion
 
         #region UI Business logic
-        /// <summary>
-        /// Delete the selected BackupInfo item from the collection if appicable.
-        /// </summary>
-        public void DeleteSelectedBackupItem ()
-        {
-            // Remove the selected row.
-            _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
-            // Trigger updates.
-            OnPropertyChanged("BackupList");
-            OnPropertyChanged("SelectedBackupItem");
-
-            Debug.WriteLine("Delete command has been executed.");
-        }
 
         /// <summary>
         /// Launches a select file dialog and returns the selected path.

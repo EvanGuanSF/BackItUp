@@ -7,6 +7,21 @@ namespace BackItUp.Models
 {
     public class BackupItem : IDataErrorInfo ,INotifyPropertyChanged
     {
+        private string _HashCode;
+        public string HashCode
+        {
+            get
+            {
+                return _HashCode;
+            }
+            set
+            {
+                _HashCode = value;
+                OnPropertyChanged("HashCode", value.ToString());
+            }
+        }
+
+
         private string _OriginPath;
         public string OriginPath
         {
@@ -124,6 +139,15 @@ namespace BackItUp.Models
 
         public BackupItem()
         {
+            LoadDefaultValues();
+        }
+
+        /// <summary>
+        /// Loads the default values for a backupinfo item.
+        /// </summary>
+        public void LoadDefaultValues()
+        {
+            HashCode = "";
             OriginPath = "";
             BackupPath = "";
             LastBackupDate = DateTime.Now;

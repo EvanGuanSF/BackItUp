@@ -29,36 +29,15 @@
     <Grid Margin="5" Background="White">
         <!-- Row Settings -->
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-
-        <Grid Margin="0, 0, 0, 5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <Label Content="Backup List" FontWeight="Bold" FontSize="20"/>
-
-            <!-- Delete selected backup job -->
-            <Button
-                x:Name="removeBackupItemButton"
-                Content="Remove Selected Item"
-                BorderThickness="2"
-                Margin="0, 5, 0, 5"
-                Command="{Binding DeleteItemCommand}"
-                HorizontalAlignment="Right"
-                Grid.Column="2"
-                />
-        </Grid>
 
         <!-- Backup configuration datagrid -->
         <DataGrid
             x:Name="backupGrid"
-            Grid.Row="1"
+            Grid.Row="0"
             SelectionMode="Single"
             SelectionUnit="FullRow"
             IsSynchronizedWithCurrentItem="True"
@@ -69,16 +48,17 @@
                 Path=DataContext.SelectedBackupItemIndex,
                 UpdateSourceTrigger=PropertyChanged,
                 Converter={StaticResource ignoreNewItemPlaceHolderConverter}}"
-            CanUserAddRows="True"
+            CanUserAddRows="False"
+            AlternatingRowBackground="LightGray"
+            AlternationCount="2"
             AutoGenerateColumns="False"
             CanUserResizeColumns="False"
             CanUserReorderColumns="False">
 
             <DataGrid.Columns>
-
                 <!-- Path to source file/folder -->
                 <DataGridTemplateColumn
-                    x:Name="originPath"
+                    x:Name="originPathColumn"
                     Header="Origin Path"
                     Width="7*">
                     <DataGridTemplateColumn.CellTemplate>
@@ -89,12 +69,31 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
+                                
+                                <Grid.ToolTip>
+                                    <ToolTip>
+                                        <TextBlock Text="Path to source file/folder"></TextBlock>
+                                    </ToolTip>
+                                </Grid.ToolTip>
+                                
+                                <Grid.Style>
+                                    <Style TargetType="{x:Type Grid}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding OriginPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
+                                                <Setter Property="Background" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                
                                 <TextBlock 
                                     Grid.Column="0"
-                                    Text="{Binding OriginPath, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
+                                    Text="{Binding OriginPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                     VerticalAlignment="Center"
-                                    HorizontalAlignment="Left"
-                                    TextWrapping="Wrap"/>
+                                    HorizontalAlignment="Stretch"
+                                    TextWrapping="Wrap"
+                                    Margin="5, 0, 0, 0">
+                                </TextBlock>
                                 <Button Grid.Column="1"
                                         Content="File"
                                         Margin="5, 0, 5, 0"
@@ -102,19 +101,16 @@
                                             RelativeSource FindAncestor, 
                                             AncestorType={x:Type Window}},
                                             Path=DataContext.SelectOriginFileDialogCmd}"
-                                        HorizontalContentAlignment="Right"></Button>
+                                        HorizontalContentAlignment="Right">
+                                </Button>
                                 <Button Grid.Column="2"
                                         Content="Folder"
                                         Command="{Binding RelativeSource={
                                             RelativeSource FindAncestor, 
                                             AncestorType={x:Type Window}},
                                             Path=DataContext.SelectOriginFolderDialogCmd}"
-                                        HorizontalContentAlignment="Right"></Button>
-                                <Grid.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock Text="Path to source file/folder"></TextBlock>
-                                    </ToolTip>
-                                </Grid.ToolTip>
+                                        HorizontalContentAlignment="Right">
+                                </Button>
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -122,7 +118,7 @@
 
                 <!-- Path to destination folder -->
                 <DataGridTemplateColumn
-                    x:Name="backupPath"
+                    x:Name="backupPathColumn"
                     Header="Backup Path"
                     Width="7*">
                     <DataGridTemplateColumn.CellTemplate>
@@ -132,12 +128,30 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
+
+                                <Grid.Style>
+                                    <Style TargetType="{x:Type Grid}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding BackupPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
+                                                <Setter Property="Background" Value="Red"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                
+                                <Grid.ToolTip>
+                                    <ToolTip>
+                                        <TextBlock Text="Path to destination folder"></TextBlock>
+                                    </ToolTip>
+                                </Grid.ToolTip>
+                                
                                 <TextBlock 
                                     Grid.Column="0"
-                                    Text="{Binding BackupPath, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=LostFocus}"
+                                    Text="{Binding BackupPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                     VerticalAlignment="Center"
-                                    HorizontalAlignment="Left"
-                                    TextWrapping="Wrap"/>
+                                    HorizontalAlignment="Stretch"
+                                    TextWrapping="Wrap"
+                                    Margin="5, 0, 0, 0"/>
                                 <Button Grid.Column="1"
                                         Content="Folder"
                                         Margin="5, 0, 0, 0"
@@ -145,12 +159,8 @@
                                            RelativeSource FindAncestor, 
                                            AncestorType={x:Type Window}},
                                            Path=DataContext.SelectBackupFolderDialogCmd}"
-                                        HorizontalContentAlignment="Right"></Button>
-                                <Grid.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock Text="Path to destination folder"></TextBlock>
-                                    </ToolTip>
-                                </Grid.ToolTip>
+                                        HorizontalContentAlignment="Right">
+                                </Button>
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -158,7 +168,7 @@
 
                 <!-- Date last backed up -->
                 <DataGridTemplateColumn
-                    x:Name="lastBackupDay"
+                    x:Name="lastBackupDayColumn"
                     Header="Last Backup"
                     Width="*"
                     IsReadOnly="True">
@@ -185,11 +195,12 @@
 
                 <!-- Frequency of backups -->
                 <DataGridTextColumn
-                    x:Name="backupFrequencyMult"
+                    x:Name="backupFrequencyMultColumn"
                     Header="Frequency"
                     Binding="{Binding BackupFrequency, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
                     CanUserSort="False"
                     Width="*">
+
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Setter Property="ToolTip" Value="Frequency of backups" />
@@ -209,6 +220,7 @@
 
                 <!-- Period between backups -->
                 <DataGridTemplateColumn
+                    x:Name="periodColumn"
                     Header="Period"
                     Width="*">
                     <DataGridTemplateColumn.CellTemplate>
@@ -235,7 +247,7 @@
 
                 <!-- Date of next backup -->
                 <DataGridTemplateColumn
-                    x:Name="nextBackupDate"
+                    x:Name="nextBackupDateColumn"
                     Header="Next Backup"
                     Width="*">
                     <DataGridTemplateColumn.CellTemplate>
@@ -261,7 +273,7 @@
 
                 <!-- Toggle for backing up this file/folder -->
                 <DataGridCheckBoxColumn
-                    x:Name="backupEnabled"
+                    x:Name="backupEnabledColumn"
                     Header="Enabled"
                     Binding="{Binding BackupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     Width="Auto">
@@ -281,8 +293,38 @@
             </DataGrid.Columns>
         </DataGrid>
 
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Add a new backup job -->
+            <Button
+                x:Name="addBackupItemButton"
+                Content="Add a New Item"
+                Margin="0, 5, 0, 5"
+                Command="{Binding AddItemCmd}"
+                HorizontalAlignment="Stretch"
+                Grid.Column="0"
+                />
+
+            <!-- Delete selected backup job -->
+            <Button
+                x:Name="removeBackupItemButton"
+                Content="Remove Selected Item"
+                Margin="0, 5, 0, 5"
+                Command="{Binding DeleteItemCmd}"
+                HorizontalAlignment="Stretch"
+                Grid.Column="4"
+                />
+        </Grid>
+
         <!-- Grid for holding configuration buttons -->
-        <Grid VerticalAlignment="Bottom" Grid.Row="2">
+        <Grid Grid.Row="2">
             <!-- Row Settings -->
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>

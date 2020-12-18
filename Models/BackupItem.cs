@@ -1,12 +1,15 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 using static BackItUp.Models.Validation.BackupItemValidation;
 
 namespace BackItUp.Models
 {
-    public class BackupItem : IDataErrorInfo ,INotifyPropertyChanged
+    public class BackupItem : IDataErrorInfo, INotifyPropertyChanged, ISerializable
     {
+        #region Properties
+
         private string _HashCode;
         public string HashCode
         {
@@ -20,7 +23,6 @@ namespace BackItUp.Models
                 OnPropertyChanged("HashCode", value.ToString());
             }
         }
-
 
         private string _OriginPath;
         public string OriginPath
@@ -109,6 +111,20 @@ namespace BackItUp.Models
             }
         }
 
+        private DateTime _BackupTime;
+        public DateTime BackupTime
+        {
+            get
+            {
+                return _BackupTime;
+            }
+            set
+            {
+                _BackupTime = value;
+                OnPropertyChanged("BackupTimeOfDay", value.ToString());
+            }
+        }
+
         private DateTime _NextBackupDate;
         public DateTime NextBackupDate
         {
@@ -137,6 +153,10 @@ namespace BackItUp.Models
             }
         }
 
+        #endregion
+
+        #region Member Methods
+
         public BackupItem()
         {
             LoadDefaultValues();
@@ -153,9 +173,12 @@ namespace BackItUp.Models
             LastBackupDate = DateTime.Now;
             BackupFrequency = "1";
             BackupPeriod = 1;
+            BackupTime = DateTime.Now;
             NextBackupDate = DateTime.Now.AddDays(1);
             BackupEnabled = true;
         }
+
+        #endregion
 
         #region INotifyPropertyChanged Members
         public event PropertyChangedEventHandler PropertyChanged;
@@ -187,6 +210,41 @@ namespace BackItUp.Models
                 return GetValidationError(propertyName);
             }
         }
+        #endregion
+
+        #region ISerializable Members
+
+        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("HashCode", HashCode);
+            info.AddValue("OriginPath", OriginPath);
+            info.AddValue("BackupPath", BackupPath);
+            info.AddValue("LastBackupDate", LastBackupDate);
+            info.AddValue("BackupFrequency", BackupFrequency);
+            info.AddValue("BackupPeriod", BackupPeriod);
+            info.AddValue("BackupTime", BackupTime);
+            info.AddValue("NextBackupDate", NextBackupDate);
+            info.AddValue("BackupEnabled", BackupEnabled);
+        }
+
+        /// <summary>
+        /// Intialize with serialized data.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
+        public BackupItem(SerializationInfo info, StreamingContext context)
+        {
+            HashCode = (string)info.GetValue("HashCode", typeof(string));
+            OriginPath = (string)info.GetValue("OriginPath", typeof(string));
+            BackupPath = (string)info.GetValue("BackupPath", typeof(string));
+            LastBackupDate = (DateTime)info.GetValue("LastBackupDate", typeof(DateTime));
+            BackupFrequency = (string)info.GetValue("BackupFrequency", typeof(string));
+            BackupPeriod = (int)info.GetValue("BackupPeriod", typeof(int));
+            BackupTime = (DateTime)info.GetValue("BackupTime", typeof(DateTime));
+            NextBackupDate = (DateTime)info.GetValue("NextBackupDate", typeof(DateTime));
+            BackupEnabled = (bool)info.GetValue("BackupEnabled", typeof(bool));
+        }
+
         #endregion
 
         #region Validation

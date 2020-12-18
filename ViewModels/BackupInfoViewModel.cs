@@ -2,6 +2,7 @@
 using BackItUp.ViewModels.Commands;
 using BackItUp.ViewModels.HelperMethods;
 using Ookii.Dialogs.Wpf;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -16,16 +17,7 @@ namespace BackItUp.ViewModels
         private ObservableCollection<BackupPeriodList> _BackupPeriodList;
         private int _SelectedBackupItemIndex;
 
-        /// <summary>
-        /// Indicates whether or not the datagrid can delete the row.
-        /// </summary>
-        public bool CanDeleteItem
-        {
-            get
-            {
-                return _SelectedBackupItemIndex < _BackupInfo.Count;
-            }
-        }
+        #region Member Methods
 
         /// <summary>
         /// Constructor for the view model.
@@ -33,7 +25,7 @@ namespace BackItUp.ViewModels
         public BackupInfoViewModel()
         {
             // Prep the backupinfo for consumption.
-            InitBackupInfo();
+            InitNewBackupInfo();
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
@@ -42,6 +34,8 @@ namespace BackItUp.ViewModels
             SelectOriginFileDialogCmd = new SelectOriginFileDialogCommand(this);
             SelectOriginFolderDialogCmd = new SelectOriginFolderDialogCommand(this);
             SelectBackupFolderDialogCmd = new SelectBackupFolderDialogCommand(this);
+
+            // Init code for exisiting config here.
         }
 
         /// <summary>
@@ -58,8 +52,6 @@ namespace BackItUp.ViewModels
                 // Set value and trigger updates.
                 _BackupInfo = value;
                 OnPropertyChanged("BackupInfo");
-
-                Debug.WriteLine("Number of BackupInfo items: ", _BackupInfo.Count);
             }
         }
 
@@ -87,10 +79,10 @@ namespace BackItUp.ViewModels
             {
                 _SelectedBackupItemIndex = value;
                 OnPropertyChanged("SelectedBackupItemIndex");
-
-                Debug.WriteLine("New selected row index: " + _SelectedBackupItemIndex.ToString());
             }
         }
+
+        #endregion
 
         #region Commands
 
@@ -110,13 +102,46 @@ namespace BackItUp.ViewModels
         }
         #endregion
 
+        #region Event Handlers
+
+        public void ModelPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "BackupFrequency" ||
+                e.PropertyName == "BackupPeriod" ||
+                e.PropertyName == "BackupTime")
+            {
+                HandleBackupDateTimeChanged();
+            }
+        }
+
+        /// <summary>
+        /// Update the NextBackupDate of the current item if a new frequency, perion, or time of day is specified.
+        /// </summary>
+        private void HandleBackupDateTimeChanged()
+        {
+            // Calculate the number of days to add, then create the new DateTime object.
+            int daysToAdd = int.Parse(BackupInfo[SelectedBackupItemIndex].BackupFrequency) * BackupInfo[SelectedBackupItemIndex].BackupPeriod;
+            DateTime newDateAndTime = new DateTime(BackupInfo[SelectedBackupItemIndex].LastBackupDate.Year,
+                BackupInfo[SelectedBackupItemIndex].LastBackupDate.Month,
+                BackupInfo[SelectedBackupItemIndex].LastBackupDate.Day,
+                BackupInfo[SelectedBackupItemIndex].BackupTime.Hour,
+                BackupInfo[SelectedBackupItemIndex].BackupTime.Minute,
+                00).AddDays(daysToAdd);
+
+            // Update the NextBackupDate with the new object/value and notify the UI.
+            BackupInfo[SelectedBackupItemIndex].NextBackupDate = newDateAndTime;
+            OnPropertyChanged("NextBackupDate");
+        }
+
+        #endregion
+
         #region Initializers
-        private void InitBackupInfo()
+        private void InitNewBackupInfo()
         {
             _BackupInfo = new ObservableCollection<BackupItem>();
             OnPropertyChanged("BackupList");
 
-            Debug.WriteLine("BackupList initilaized.");
+            AddBackupItem();
         }
         private void InitBackupPeriodList()
         {
@@ -127,33 +152,35 @@ namespace BackItUp.ViewModels
                 new BackupPeriodList(30, "Month(s)")
             };
             OnPropertyChanged("BackupPeriodList");
-
-            Debug.WriteLine("BackupPeriodList initilaized.");
         }
         #endregion
 
         #region Command Helper Methods
 
         /// <summary>
+        /// Indicates whether or not the datagrid can delete the row.
+        /// </summary>
+        public bool CanDeleteItem
+        {
+            get
+            {
+                return _SelectedBackupItemIndex < _BackupInfo.Count;
+            }
+        }
+
+        /// <summary>
         /// Launch a dialog window so that the user can select an origin file path.
         /// </summary>
         public void GetNewOriginFilePath()
         {
-            //Debug.WriteLine("GetOriginFilePath");
-            //Debug.WriteLine(string.Format("Count: {0} Index: {1}", BackupInfo.Count, SelectedBackupItemIndex));
-
             string filePath = ShowSelectOriginFileDialog();
 
             if (!File.Exists(filePath))
                 return;
 
-            UpdateIndices();
-
             BackupInfo[SelectedBackupItemIndex].OriginPath = filePath;
 
             UpdateItemHash();
-
-            Debug.WriteLine(filePath);
         }
 
         /// <summary>
@@ -161,21 +188,14 @@ namespace BackItUp.ViewModels
         /// </summary>
         public void GetNewOriginFolderPath()
         {
-            //Debug.WriteLine("GetOriginFolderPath");
-            //Debug.WriteLine(string.Format("Count: {0} Index: {1}", BackupInfo.Count, SelectedBackupItemIndex));
-
             string folderPath = ShowSelectPathDialog();
 
             if (!Directory.Exists(folderPath))
                 return;
 
-            UpdateIndices();
-
             BackupInfo[SelectedBackupItemIndex].OriginPath = folderPath;
 
             UpdateItemHash();
-
-            Debug.WriteLine(folderPath);
         }
 
         /// <summary>
@@ -183,35 +203,14 @@ namespace BackItUp.ViewModels
         /// </summary>
         public void GetNewBackupFolderPath()
         {
-            //Debug.WriteLine("GetBackupFolderPath");
-            //Debug.WriteLine(string.Format("Count: {0} Index: {1}", BackupInfo.Count, SelectedBackupItemIndex));
-
             string folderPath = ShowSelectPathDialog();
 
             if (!Directory.Exists(folderPath))
                 return;
 
-            UpdateIndices();
-
             BackupInfo[SelectedBackupItemIndex].BackupPath = folderPath;
 
             UpdateItemHash();
-
-            Debug.WriteLine(folderPath);
-        }
-
-        private void UpdateIndices()
-        {
-            if (BackupInfo.Count == 0)
-            {
-                BackupInfo.Add(new BackupItem());
-                SelectedBackupItemIndex = 0;
-            }
-            else if (BackupInfo.Count == SelectedBackupItemIndex)
-            {
-                BackupInfo.Add(new BackupItem());
-                SelectedBackupItemIndex = BackupInfo.Count - 1;
-            }
         }
 
         /// <summary>
@@ -228,8 +227,6 @@ namespace BackItUp.ViewModels
             SelectedBackupItemIndex = BackupInfo.Count - 1;
             OnPropertyChanged("BackupList");
             OnPropertyChanged("SelectedBackupItem");
-
-            //Debug.WriteLine("Delete command has been executed.");
         }
 
         /// <summary>
@@ -239,6 +236,7 @@ namespace BackItUp.ViewModels
         {
             BackupInfo.Add(new BackupItem());
             SelectedBackupItemIndex = BackupInfo.Count - 1;
+            BackupInfo[SelectedBackupItemIndex].PropertyChanged += ModelPropertyChanged;
         }
 
         #endregion
@@ -310,8 +308,6 @@ namespace BackItUp.ViewModels
             selectFolderDialog.Description = "Select a path";
             selectFolderDialog.UseDescriptionForTitle = true;
             selectFolderDialog.ShowDialog();
-
-            Debug.WriteLine(selectFolderDialog.SelectedPath);
 
             return selectFolderDialog.SelectedPath;
         }

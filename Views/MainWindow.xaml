@@ -5,6 +5,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vc="clr-namespace:BackItUp.ViewModels.ValueConverters"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
         Title="Back It Up" Height="900" Width="1600"
         WindowStartupLocation="CenterScreen"
@@ -60,7 +61,7 @@
                 <DataGridTemplateColumn
                     x:Name="originPathColumn"
                     Header="Origin Path"
-                    Width="7*">
+                    Width="5*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -69,15 +70,15 @@
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                
+
                                 <Grid.ToolTip>
                                     <ToolTip>
                                         <TextBlock Text="Path to source file/folder"></TextBlock>
                                     </ToolTip>
                                 </Grid.ToolTip>
-                                
+
                                 <Grid.Style>
-                                    <Style TargetType="{x:Type Grid}">
+                                    <Style TargetType="Grid">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding OriginPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
                                                 <Setter Property="Background" Value="Red"/>
@@ -85,15 +86,17 @@
                                         </Style.Triggers>
                                     </Style>
                                 </Grid.Style>
-                                
+
                                 <TextBlock 
                                     Grid.Column="0"
+                                    x:Name="originPathText"
                                     Text="{Binding OriginPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Stretch"
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 0, 0">
                                 </TextBlock>
+                                
                                 <Button Grid.Column="1"
                                         Content="File"
                                         Margin="5, 0, 5, 0"
@@ -103,6 +106,7 @@
                                             Path=DataContext.SelectOriginFileDialogCmd}"
                                         HorizontalContentAlignment="Right">
                                 </Button>
+                                
                                 <Button Grid.Column="2"
                                         Content="Folder"
                                         Command="{Binding RelativeSource={
@@ -111,6 +115,7 @@
                                             Path=DataContext.SelectOriginFolderDialogCmd}"
                                         HorizontalContentAlignment="Right">
                                 </Button>
+                                
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -120,7 +125,7 @@
                 <DataGridTemplateColumn
                     x:Name="backupPathColumn"
                     Header="Backup Path"
-                    Width="7*">
+                    Width="5*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -152,6 +157,7 @@
                                     HorizontalAlignment="Stretch"
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 0, 0"/>
+                                
                                 <Button Grid.Column="1"
                                         Content="Folder"
                                         Margin="5, 0, 0, 0"
@@ -161,6 +167,7 @@
                                            Path=DataContext.SelectBackupFolderDialogCmd}"
                                         HorizontalContentAlignment="Right">
                                 </Button>
+                                
                             </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -170,25 +177,22 @@
                 <DataGridTemplateColumn
                     x:Name="lastBackupDayColumn"
                     Header="Last Backup"
-                    Width="*"
+                    Width="Auto"
                     IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <DatePicker
-                                Name="lastBackupDate"
-                                SelectedDate="{Binding LastBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                DisplayDateStart="{x:Static sys:DateTime.Now}">
-                                <DatePicker.Resources>
-                                    <Style TargetType="DatePickerTextBox">
-                                        <Setter Property="IsReadOnly" Value="True"/>
-                                        <Setter Property="ToolTip" Value="Date last backed up" />
-                                    </Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </Style>
-                                </DatePicker.Resources>
-                            </DatePicker>
+
+                            <TextBlock 
+                                    Grid.Column="0"
+                                    x:Name="originPathText"
+                                    Text="{Binding LastBackupDate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Stretch"
+                                    TextWrapping="Wrap"
+                                    Margin="5, 0, 5, 0"
+                                    Width="Auto">
+                            </TextBlock>
+
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -197,25 +201,36 @@
                 <DataGridTextColumn
                     x:Name="backupFrequencyMultColumn"
                     Header="Frequency"
-                    Binding="{Binding BackupFrequency, Mode=TwoWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                    Binding="{Binding BackupFrequency, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     CanUserSort="False"
                     Width="*">
 
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding BackupFrequency, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
+                                    <Setter Property="BorderBrush" Value="Red"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                            
                             <Setter Property="ToolTip" Value="Frequency of backups" />
                         </Style>
                     </DataGridTextColumn.CellStyle>
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Center" />
+                            <Setter Property="Margin" Value="5, 0, 5, 0"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                     <DataGridTextColumn.EditingElementStyle>
                         <Style TargetType="TextBox">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="HorizontalAlignment" Value="Center" />
                             <Setter Property="MaxLength" Value="3"/>
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
+                    
                 </DataGridTextColumn>
 
                 <!-- Period between backups -->
@@ -225,6 +240,7 @@
                     Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
+
                             <ComboBox
                                 SelectedValue="{Binding BackupPeriod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 SelectedValuePath="PeriodKey"
@@ -241,32 +257,45 @@
                                     </Style>
                                 </ComboBox.Resources>
                             </ComboBox>
+
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <!-- Date of next backup -->
+                <!-- Time for backups -->
                 <DataGridTemplateColumn
-                    x:Name="nextBackupDateColumn"
-                    Header="Next Backup"
-                    Width="*">
+                    x:Name="backupTimeOfDayColumn"
+                    Header="Time"
+                    Width="95">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <DatePicker
+
+                            <xctk:TimePicker
+                                Name="backupTimeOfDay"
+                                Value="{Binding BackupTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                IsReadOnly="False">
+                            </xctk:TimePicker>
+
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                
+                <!-- Date and time of next backup -->
+                <DataGridTemplateColumn
+                    x:Name="nextBackupDateColumn"
+                    Header="Next Backup Date"
+                    Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+
+                            <xctk:DateTimePicker
                                 Name="lastBackupDate"
-                                SelectedDate="{Binding NextBackupDate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                DisplayDateStart="{x:Static sys:DateTime.Now}">
-                                <DatePicker.Resources>
-                                    <Style TargetType="DatePickerTextBox">
-                                        <Setter Property="IsReadOnly" Value="True"/>
-                                        <Setter Property="ToolTip" Value="Date of next backup" />
-                                    </Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="IsEnabled" Value="False"/>
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                    </Style>
-                                </DatePicker.Resources>
-                            </DatePicker>
+                                Value="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                Margin="5, 0, 5, 0"
+                                Format="Custom"
+                                FormatString="MM-dd-yyyy hh:mm tt">
+                            </xctk:DateTimePicker>
+
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

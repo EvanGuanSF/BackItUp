@@ -61,11 +61,12 @@ namespace BackItUp.Models.Validation
             int temp;
 
             if(frequencyAsString != null &&
-               frequencyAsString.Length >= 0 &&
+               frequencyAsString.Length > 0 &&
                frequencyAsString.Length < 4 &&
                int.TryParse(frequencyAsString, out temp))
             {
-                return null;
+                if(temp > 0)
+                    return null;
             }
 
             return "Backup Frequency must be 1-3 digit integer.";

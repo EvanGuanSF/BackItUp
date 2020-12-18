@@ -11,7 +11,7 @@ namespace BackItUp.Models
         {
             PeriodKey = key;
             PeriodValue = value;
-            Debug.WriteLine(string.Format("Added {0} = {1}", key, value));
+            //Debug.WriteLine(string.Format("Added {0} = {1}", key, value));
         }
     }
 }

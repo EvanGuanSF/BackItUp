@@ -121,7 +121,7 @@ namespace BackItUp.Models
             set
             {
                 _BackupTime = value;
-                OnPropertyChanged("BackupTimeOfDay", value.ToString());
+                OnPropertyChanged("BackupTime", value.ToString());
             }
         }
 

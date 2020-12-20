@@ -1,4 +1,5 @@
 ﻿using BackItUp.Models;
+using BackItUp.ViewModels.Serialization;
 using BackItUp.ViewModels.Commands;
 using BackItUp.ViewModels.HelperMethods;
 using Ookii.Dialogs.Wpf;
@@ -25,7 +26,7 @@ namespace BackItUp.ViewModels
         public BackupInfoViewModel()
         {
             // Prep the backupinfo for consumption.
-            InitNewBackupInfo();
+            InitBackupInfo();
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
@@ -34,8 +35,9 @@ namespace BackItUp.ViewModels
             SelectOriginFileDialogCmd = new SelectOriginFileDialogCommand(this);
             SelectOriginFolderDialogCmd = new SelectOriginFolderDialogCommand(this);
             SelectBackupFolderDialogCmd = new SelectBackupFolderDialogCommand(this);
-
-            // Init code for exisiting config here.
+            SaveAndApplyConfigCmd = new SaveApplyConfigCommand(this);
+            LoadConfigCmd = new LoadConfigCommand(this);
+            ResetConfigCmd = new ResetConfigCommand(this);
         }
 
         /// <summary>
@@ -82,6 +84,35 @@ namespace BackItUp.ViewModels
             }
         }
 
+        /// <summary>
+        /// Check all BackupInfo items to see if they are valid.
+        /// Rules:
+        /// Do not allow empty path fields.
+        /// Paths that do not exist are still valid.
+        /// Do not worry about permissions issues.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsBackupInfoValid()
+        {
+            foreach(BackupItem item in BackupInfo)
+            {
+                // Check the origin and then backup paths. If any irregularities are found, then do not allow the user to save/apply the config.
+                if(!(!String.IsNullOrWhiteSpace(item.OriginPath)
+                    && item.OriginPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
+                    && Path.IsPathRooted(item.OriginPath)
+                    && !Path.GetPathRoot(item.OriginPath).Equals(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)) ||
+                    !(!String.IsNullOrWhiteSpace(item.BackupPath)
+                    && item.BackupPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
+                    && Path.IsPathRooted(item.BackupPath)
+                    && !Path.GetPathRoot(item.BackupPath).Equals(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         #endregion
 
         #region Commands
@@ -91,6 +122,9 @@ namespace BackItUp.ViewModels
         public ICommand SelectOriginFileDialogCmd { get; set; }
         public ICommand SelectOriginFolderDialogCmd { get; set; }
         public ICommand SelectBackupFolderDialogCmd { get; set; }
+        public ICommand SaveAndApplyConfigCmd { get; set; }
+        public ICommand LoadConfigCmd { get; set; }
+        public ICommand ResetConfigCmd { get; set; }
 
         #endregion
 
@@ -136,13 +170,13 @@ namespace BackItUp.ViewModels
         #endregion
 
         #region Initializers
-        private void InitNewBackupInfo()
-        {
-            _BackupInfo = new ObservableCollection<BackupItem>();
-            OnPropertyChanged("BackupList");
 
-            AddBackupItem();
+        private void InitBackupInfo()
+        {
+            LoadConfig();
+            OnPropertyChanged("BackupList");
         }
+
         private void InitBackupPeriodList()
         {
             _BackupPeriodList = new ObservableCollection<BackupPeriodList>
@@ -153,6 +187,7 @@ namespace BackItUp.ViewModels
             };
             OnPropertyChanged("BackupPeriodList");
         }
+
         #endregion
 
         #region Command Helper Methods
@@ -237,6 +272,30 @@ namespace BackItUp.ViewModels
             BackupInfo.Add(new BackupItem());
             SelectedBackupItemIndex = BackupInfo.Count - 1;
             BackupInfo[SelectedBackupItemIndex].PropertyChanged += ModelPropertyChanged;
+        }
+
+        /// <summary>
+        /// Command helper for saving the current BackupInfo.
+        /// </summary>
+        public void SaveAndApplyConfig()
+        {
+            Serializer.SaveConfigToFile(BackupInfo);
+        }
+
+        /// <summary>
+        /// Attempt to load the config file from the .dat file.
+        /// </summary>
+        public void LoadConfig()
+        {
+            BackupInfo = Serializer.LoadConfigFromFile();
+            if (BackupInfo.Count == 0)
+                BackupInfo.Add(new BackupItem());
+        }
+
+        public void ResetConfig()
+        {
+            BackupInfo = new ObservableCollection<BackupItem>();
+            BackupInfo.Add(new BackupItem());
         }
 
         #endregion

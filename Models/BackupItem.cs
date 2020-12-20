@@ -6,6 +6,7 @@ using static BackItUp.Models.Validation.BackupItemValidation;
 
 namespace BackItUp.Models
 {
+    [Serializable()]
     public class BackupItem : IDataErrorInfo, INotifyPropertyChanged, ISerializable
     {
         #region Properties
@@ -181,6 +182,7 @@ namespace BackItUp.Models
         #endregion
 
         #region INotifyPropertyChanged Members
+        [field: NonSerialized]
         public event PropertyChangedEventHandler PropertyChanged;
         private void OnPropertyChanged(string propertyName)
         {
@@ -214,6 +216,11 @@ namespace BackItUp.Models
 
         #region ISerializable Members
 
+        /// <summary>
+        /// Serialize class data.
+        /// </summary>
+        /// <param name="info"></param>
+        /// <param name="context"></param>
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue("HashCode", HashCode);

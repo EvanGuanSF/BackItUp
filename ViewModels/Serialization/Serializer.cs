@@ -18,7 +18,7 @@ namespace BackItUp.ViewModels.Serialization
         private static BinaryFormatter binaryFormatter;
 
         /// <summary>
-        /// Serializes the passed in collection to the passed in path.
+        /// Serializes the passed in collection to .dat format and save in the default config path.
         /// </summary>
         /// <param name="backupCollection"></param>
         public static void SaveConfigToFile(ObservableCollection<BackupItem> backupCollection)
@@ -37,9 +37,8 @@ namespace BackItUp.ViewModels.Serialization
         }
 
         /// <summary>
-        /// Serializes the passed in collection to the passed in path.
+        /// Deserialize the collection in .dat format from the default config path and add to collection.
         /// </summary>
-        /// <param name="backupConfigPath"></param>
         public static ObservableCollection<BackupItem> LoadConfigFromFile()
         {
             isSerializerIdle = false;

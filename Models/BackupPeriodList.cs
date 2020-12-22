@@ -3,6 +3,9 @@ using System.Diagnostics;
 
 namespace BackItUp.Models
 {
+    /// <summary>
+    /// Holds a key/value pair indicating the number of days (value) per period (key).
+    /// </summary>
     public class BackupPeriodList
     {
         public int PeriodKey { get; set; }

@@ -47,7 +47,7 @@ namespace NotifyIconViewModel
 
 
         /// <summary>
-        /// Hides the main window. This command is only enabled if a window is open.
+        /// Toggle the visibility of the window.
         /// </summary>
         public ICommand ToggleWindowVisibilityCommand
         {

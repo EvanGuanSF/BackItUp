@@ -1,7 +1,7 @@
 ﻿using BackItUp.Models;
 using BackItUp.ViewModels.Serialization;
 using BackItUp.ViewModels.Commands;
-using BackItUp.ViewModels.HelperMethods;
+using BackItUp.ViewModels.HashCodeGenerator;
 using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.ObjectModel;
@@ -41,7 +41,7 @@ namespace BackItUp.ViewModels
         }
 
         /// <summary>
-        /// Gets the backup information collection.
+        /// Getter/setter for the BackupInfo collection.
         /// </summary>
         public ObservableCollection<BackupItem> BackupInfo
         {
@@ -91,17 +91,17 @@ namespace BackItUp.ViewModels
         /// Paths that do not exist are still valid.
         /// Do not worry about permissions issues.
         /// </summary>
-        /// <returns></returns>
-        public bool IsBackupInfoValid()
+        /// <returns>bool indicating validity of both paths</returns>
+        protected bool IsBackupInfoValid()
         {
             foreach(BackupItem item in BackupInfo)
             {
                 // Check the origin and then backup paths. If any irregularities are found, then do not allow the user to save/apply the config.
-                if(!(!String.IsNullOrWhiteSpace(item.OriginPath)
+                if(!(!string.IsNullOrWhiteSpace(item.OriginPath)
                     && item.OriginPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
                     && Path.IsPathRooted(item.OriginPath)
                     && !Path.GetPathRoot(item.OriginPath).Equals(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)) ||
-                    !(!String.IsNullOrWhiteSpace(item.BackupPath)
+                    !(!string.IsNullOrWhiteSpace(item.BackupPath)
                     && item.BackupPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
                     && Path.IsPathRooted(item.BackupPath)
                     && !Path.GetPathRoot(item.BackupPath).Equals(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)))
@@ -149,7 +149,7 @@ namespace BackItUp.ViewModels
         }
 
         /// <summary>
-        /// Update the NextBackupDate of the current item if a new frequency, perion, or time of day is specified.
+        /// Update the NextBackupDate of the current item if a new frequency, period, or time of day is specified.
         /// </summary>
         private void HandleBackupDateTimeChanged()
         {
@@ -171,12 +171,18 @@ namespace BackItUp.ViewModels
 
         #region Initializers
 
+        /// <summary>
+        /// Default initializer.
+        /// </summary>
         private void InitBackupInfo()
         {
             LoadConfig();
             OnPropertyChanged("BackupList");
         }
 
+        /// <summary>
+        /// Default initializer for the period selection combobox.
+        /// </summary>
         private void InitBackupPeriodList()
         {
             _BackupPeriodList = new ObservableCollection<BackupPeriodList>
@@ -193,7 +199,7 @@ namespace BackItUp.ViewModels
         #region Command Helper Methods
 
         /// <summary>
-        /// Indicates whether or not the datagrid can delete the row.
+        /// Retrun a bool indicating whether or not the datagrid can delete the selected row.
         /// </summary>
         public bool CanDeleteItem
         {
@@ -249,7 +255,7 @@ namespace BackItUp.ViewModels
         }
 
         /// <summary>
-        /// Delete the selected BackupInfo item from the collection if appicable.
+        /// Delete the selected BackupInfo item from the collection if applicable.
         /// </summary>
         public void DeleteSelectedBackupItem()
         {
@@ -258,14 +264,11 @@ namespace BackItUp.ViewModels
 
             // Remove the selected row.
             _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
-            // Trigger updates.
             SelectedBackupItemIndex = BackupInfo.Count - 1;
-            OnPropertyChanged("BackupList");
-            OnPropertyChanged("SelectedBackupItem");
         }
 
         /// <summary>
-        /// Adds a backup item to the backupitem collection.
+        /// Add a backup item to the BackupInfo collection.
         /// </summary>
         public void AddBackupItem()
         {
@@ -283,19 +286,22 @@ namespace BackItUp.ViewModels
         }
 
         /// <summary>
-        /// Attempt to load the config file from the .dat file.
+        /// Load the backup config file from the .dat file.
         /// </summary>
         public void LoadConfig()
         {
             BackupInfo = Serializer.LoadConfigFromFile();
             if (BackupInfo.Count == 0)
-                BackupInfo.Add(new BackupItem());
+                AddBackupItem();
         }
 
+        /// <summary>
+        /// Create a new BackupInfo collection and discard the old one.
+        /// </summary>
         public void ResetConfig()
         {
             BackupInfo = new ObservableCollection<BackupItem>();
-            BackupInfo.Add(new BackupItem());
+            AddBackupItem();
         }
 
         #endregion
@@ -311,16 +317,18 @@ namespace BackItUp.ViewModels
             if(!string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].OriginPath) &&
                !string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].BackupPath))
             {
-                BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(BackupInfo[_SelectedBackupItemIndex].OriginPath + BackupInfo[_SelectedBackupItemIndex].OriginPath);
-                ReinitializeDuplicateBackups();
+                BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(
+                    BackupInfo[_SelectedBackupItemIndex].OriginPath +
+                    BackupInfo[_SelectedBackupItemIndex].BackupPath);
+                CheckReinitializeDuplicateBackup();
             }
         }
 
         /// <summary>
-        /// Resets the current backinfo item if the same hash code already exists (same origin/backup paths as an existing item).
+        /// Checks for and resets the current BackupItem if the same hash code already exists (same origin/backup paths as an existing item).
         /// </summary>
         /// <param name="newHashCode"></param>
-        private void ReinitializeDuplicateBackups()
+        private void CheckReinitializeDuplicateBackup()
         {
             if (BackupInfo.Count == 0)
                 return;
@@ -359,7 +367,7 @@ namespace BackItUp.ViewModels
         }
 
         /// <summary>
-        /// Launch a dialog window so that the user can select a path.
+        /// Launches a select path dialog and returns the selected path.
         /// </summary>
         private string ShowSelectPathDialog()
         {

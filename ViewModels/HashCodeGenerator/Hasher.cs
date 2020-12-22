@@ -4,7 +4,7 @@ using System.Text;
 using System.Security.Cryptography;
 using System.Diagnostics;
 
-namespace BackItUp.ViewModels.HelperMethods
+namespace BackItUp.ViewModels.HashCodeGenerator
 {
     public static class Hasher
     {

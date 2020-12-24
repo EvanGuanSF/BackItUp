@@ -112,6 +112,20 @@ namespace BackItUp.Models
             }
         }
 
+        private TimeSpan _BackupInterval;
+        public TimeSpan BackupInterval
+        {
+            get
+            {
+                return _BackupInterval;
+            }
+            set
+            {
+                _BackupInterval = value;
+                OnPropertyChanged("BackupInterval", value.ToString());
+            }
+        }
+
         private DateTime _BackupTime;
         public DateTime BackupTime
         {
@@ -174,6 +188,7 @@ namespace BackItUp.Models
             LastBackupDate = DateTime.Now;
             BackupFrequency = "1";
             BackupPeriod = 1;
+            BackupInterval = TimeSpan.FromDays(1);
             BackupTime = DateTime.Now;
             NextBackupDate = DateTime.Now.AddDays(1);
             BackupEnabled = true;
@@ -229,6 +244,7 @@ namespace BackItUp.Models
             info.AddValue("LastBackupDate", LastBackupDate);
             info.AddValue("BackupFrequency", BackupFrequency);
             info.AddValue("BackupPeriod", BackupPeriod);
+            info.AddValue("BackupInterval", BackupInterval);
             info.AddValue("BackupTime", BackupTime);
             info.AddValue("NextBackupDate", NextBackupDate);
             info.AddValue("BackupEnabled", BackupEnabled);
@@ -247,6 +263,7 @@ namespace BackItUp.Models
             LastBackupDate = (DateTime)info.GetValue("LastBackupDate", typeof(DateTime));
             BackupFrequency = (string)info.GetValue("BackupFrequency", typeof(string));
             BackupPeriod = (int)info.GetValue("BackupPeriod", typeof(int));
+            BackupInterval = (TimeSpan)info.GetValue("BackupInterval", typeof(TimeSpan));
             BackupTime = (DateTime)info.GetValue("BackupTime", typeof(DateTime));
             NextBackupDate = (DateTime)info.GetValue("NextBackupDate", typeof(DateTime));
             BackupEnabled = (bool)info.GetValue("BackupEnabled", typeof(bool));

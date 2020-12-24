@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
+using BackItUp.ViewModels.TaskManagement;
 
 namespace BackItUp.ViewModels
 {
@@ -25,8 +26,12 @@ namespace BackItUp.ViewModels
         /// </summary>
         public BackupInfoViewModel()
         {
+            _BackupInfo = new ObservableCollection<BackupItem>();
+            AddBackupItem();
+
+
             // Prep the backupinfo for consumption.
-            InitBackupInfo();
+            //InitBackupInfo();
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
@@ -38,6 +43,19 @@ namespace BackItUp.ViewModels
             SaveAndApplyConfigCmd = new SaveApplyConfigCommand(this);
             LoadConfigCmd = new LoadConfigCommand(this);
             ResetConfigCmd = new ResetConfigCommand(this);
+
+
+            BackupItem testItem = new BackupItem();
+
+            testItem.OriginPath = @"C:\Users\Jammy\Desktop\Working\test 1 2 3\";
+            testItem.BackupPath = @"F:\Vids\";
+            testItem.HashCode = Hasher.StringHasher(testItem.OriginPath + testItem.BackupPath);
+            testItem.BackupInterval = TimeSpan.FromMinutes(1);
+            testItem.NextBackupDate = DateTime.Now.AddSeconds(10);
+
+            Debug.WriteLine(Path.GetFileName(Path.GetDirectoryName(testItem.OriginPath)));
+
+            TaskManager.TaskTest(testItem);
         }
 
         /// <summary>
@@ -92,7 +110,7 @@ namespace BackItUp.ViewModels
         /// Do not worry about permissions issues.
         /// </summary>
         /// <returns>bool indicating validity of both paths</returns>
-        protected bool IsBackupInfoValid()
+        public bool IsBackupInfoValid()
         {
             foreach(BackupItem item in BackupInfo)
             {
@@ -164,6 +182,14 @@ namespace BackItUp.ViewModels
 
             // Update the NextBackupDate with the new object/value and notify the UI.
             BackupInfo[SelectedBackupItemIndex].NextBackupDate = newDateAndTime;
+            // Also update the BackupInterval.
+            BackupInfo[SelectedBackupItemIndex].BackupInterval = new TimeSpan(
+                daysToAdd,
+                BackupInfo[SelectedBackupItemIndex].BackupTime.Hour,
+                BackupInfo[SelectedBackupItemIndex].BackupTime.Minute,
+                0
+                );
+            OnPropertyChanged("BackupInterval");
             OnPropertyChanged("NextBackupDate");
         }
 

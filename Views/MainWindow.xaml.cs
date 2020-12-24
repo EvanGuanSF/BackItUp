@@ -19,10 +19,6 @@ namespace BackItUp.Views
             this.Show();
         }
 
-        private void stateChanged(object sender, EventArgs e)
-        {
-            this.WindowState = WindowState.Maximized;
-        }
         protected override void OnClosing(CancelEventArgs e)
         {
             e.Cancel = true;

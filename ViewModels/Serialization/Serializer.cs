@@ -13,7 +13,7 @@ namespace BackItUp.ViewModels.Serialization
     public static class Serializer
     {
         // Flag for enabling/disabling other serializtion jobs.
-        public static bool isSerializerIdle { get; private set; } = true;
+        public static bool IsSerializerIdle { get; private set; } = true;
         private static Stream stream;
         private static BinaryFormatter binaryFormatter;
 
@@ -23,27 +23,27 @@ namespace BackItUp.ViewModels.Serialization
         /// <param name="backupCollection"></param>
         public static void SaveConfigToFile(ObservableCollection<BackupItem> backupCollection)
         {
-            isSerializerIdle = false;
+            IsSerializerIdle = false;
 
-            if (!isSerializerIdle)
+            if (!IsSerializerIdle)
             {
                 stream = File.Open(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Create);
                 binaryFormatter = new BinaryFormatter();
                 binaryFormatter.Serialize(stream, backupCollection.ToList());
                 stream.Close();
 
-                isSerializerIdle = true;
+                IsSerializerIdle = true;
             }
         }
 
         /// <summary>
-        /// Deserialize the collection in .dat format from the default config path and add to collection.
+        /// Deserialize the BackupInfo collection in .dat format from the default config path and add to collection.
         /// </summary>
         public static ObservableCollection<BackupItem> LoadConfigFromFile()
         {
-            isSerializerIdle = false;
+            IsSerializerIdle = false;
             // If we have a config file, then load and return it. Otherwise, return an empty collection.
-            if (!isSerializerIdle && File.Exists(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
+            if (!IsSerializerIdle && File.Exists(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
             {
 
                 // Create a new collection.
@@ -56,12 +56,12 @@ namespace BackItUp.ViewModels.Serialization
                 backupCollection = new ObservableCollection<BackupItem>(streamData);
                 stream.Close();
 
-                isSerializerIdle = true;
+                IsSerializerIdle = true;
                 return backupCollection;
             }
             else
             {
-                isSerializerIdle = true;
+                IsSerializerIdle = true;
                 return new ObservableCollection<BackupItem>();
             }
         }

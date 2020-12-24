@@ -25,7 +25,7 @@ namespace BackItUp.ViewModels.Commands
 
         public bool CanExecute(object parameter)
         {
-            return Serializer.isSerializerIdle;
+            return Serializer.IsSerializerIdle;
         }
 
         public void Execute(object parameter)

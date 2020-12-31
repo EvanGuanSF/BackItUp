@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
 using System.Security.Cryptography;
 using System.Diagnostics;
@@ -27,7 +26,7 @@ namespace BackItUp.ViewModels.HashCodeGenerator
                 hashResult = BitConverter.ToString(hasher256.ComputeHash(Encoding.UTF8.GetBytes(inputString.ToLower()))).Replace("-", string.Empty);
             }
 
-            Debug.WriteLine("Hashed: " + hashResult);
+            //Debug.WriteLine(string.Format("Hashed: {0}", hashResult));
 
             return hashResult;
         }

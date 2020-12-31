@@ -29,7 +29,7 @@ namespace BackItUp.ViewModels.Commands
 
         public void Execute(object parameter)
         {
-            _ViewModel.DeleteSelectedBackupItem();
+            _ViewModel.DeleteBackupItemBySelectedIndex();
         }
         #endregion
     }

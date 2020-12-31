@@ -9,7 +9,7 @@ namespace BackItUp.ViewModels.Commands
         private BackupInfoViewModel _ViewModel;
 
         /// <summary>
-        /// Initialize a new instance of the DeleteBackupItemCommand class.
+        /// Initialize a new instance of the LoadConfigCommand class.
         /// </summary>
         /// <param name="viewModel"></param>
         public LoadConfigCommand(BackupInfoViewModel viewModel) {

@@ -1,4 +1,5 @@
 ﻿using BackItUp.Models;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -45,19 +46,28 @@ namespace BackItUp.ViewModels.Serialization
             // If we have a config file, then load and return it. Otherwise, return an empty collection.
             if (!IsSerializerIdle && File.Exists(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
             {
-
-                // Create a new collection.
-                ObservableCollection<BackupItem> backupCollection;
-
-                // Open the file, deserialize contents, close the stream, and return the new collection.
-                binaryFormatter = new BinaryFormatter();
                 stream = File.Open(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Open);
-                List<BackupItem> streamData = (List<BackupItem>)binaryFormatter.Deserialize(stream);
-                backupCollection = new ObservableCollection<BackupItem>(streamData);
-                stream.Close();
+                try
+                {
+                    // Create a new collection.
+                    ObservableCollection<BackupItem> backupCollection;
 
-                IsSerializerIdle = true;
-                return backupCollection;
+                    // Open the file, deserialize contents, close the stream, and return the new collection.
+                    binaryFormatter = new BinaryFormatter();
+                    List<BackupItem> streamData = (List<BackupItem>)binaryFormatter.Deserialize(stream);
+                    backupCollection = new ObservableCollection<BackupItem>(streamData);
+                    stream.Close();
+
+                    IsSerializerIdle = true;
+                    return backupCollection;
+                }
+                catch
+                {
+                    // If there was an error in the backup data, just load a new BackupInfo collection instead.
+                    stream.Close();
+                    IsSerializerIdle = true;
+                    return new ObservableCollection<BackupItem>();
+                }
             }
             else
             {

@@ -6,13 +6,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vc="clr-namespace:BackItUp.ViewModels.ValueConverters"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
         Title="Back It Up" Height="900" Width="1600"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         WindowStyle="SingleBorderWindow"
-        ShowInTaskbar="False"
+        ShowInTaskbar="True"
         >
 
     <Window.Resources>
@@ -22,6 +21,11 @@
         <!-- DataGrid style -->
         <Style TargetType="{x:Type DataGrid}">
             <Setter Property="RowHeaderWidth" Value="0" />
+        </Style>
+
+        <Style x:Key="CenterGridHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="SeparatorBrush" Value="Transparent"/>
         </Style>
 
     </Window.Resources>
@@ -52,8 +56,11 @@
                 Margin="0, 0, 5, 0"
                 Command="{Binding AddItemCmd}"
                 HorizontalAlignment="Stretch"
-                Grid.Column="0"
-                />
+                Grid.Column="0">
+                <Button.ToolTip>
+                    Add a new backup item to the list.
+                </Button.ToolTip>
+            </Button>
 
             <!-- Delete selected backup job -->
             <Button
@@ -62,8 +69,11 @@
                 Margin="5, 0, 0, 0"
                 Command="{Binding DeleteItemCmd}"
                 HorizontalAlignment="Stretch"
-                Grid.Column="4"
-                />
+                Grid.Column="4">
+                <Button.ToolTip>
+                    Remove the selected backup item from the list.
+                </Button.ToolTip>
+            </Button>
         </Grid>
 
         <!-- Backup configuration datagrid -->
@@ -92,62 +102,77 @@
                 <DataGridTemplateColumn
                     x:Name="originPathColumn"
                     Header="Origin Path"
-                    Width="5*">
+                    Width="5*"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
 
-                                <Grid.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock Text="Path to source file/folder"></TextBlock>
-                                    </ToolTip>
-                                </Grid.ToolTip>
+                            <Border
+                                x:Name="originPathBorderBox">
+                                <Grid
+                                    x:Name="originPathGrid">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <Grid.Style>
-                                    <Style TargetType="Grid">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding OriginPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
-                                                <Setter Property="Background" Value="Red"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Grid.Style>
+                                    <Grid.Style>
+                                        <Style TargetType="{x:Type Grid}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding OriginPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
+                                                    <Setter Property="Background" Value="Red"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
 
-                                <TextBlock 
-                                    Grid.Column="0"
-                                    x:Name="originPathText"
-                                    Text="{Binding OriginPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Stretch"
-                                    TextWrapping="Wrap"
-                                    Margin="5, 0, 0, 0">
-                                </TextBlock>
+                                    <Grid.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock>
+                                                 Path to source file/folder.
+                                            </TextBlock>
+                                        </ToolTip>
+                                    </Grid.ToolTip>
 
-                                <Button Grid.Column="1"
-                                        Content="File"
-                                        Margin="5, 0, 5, 0"
-                                        Command="{Binding RelativeSource={
-                                            RelativeSource FindAncestor, 
-                                            AncestorType={x:Type Window}},
-                                            Path=DataContext.SelectOriginFileDialogCmd}"
-                                        HorizontalContentAlignment="Right">
-                                </Button>
+                                    <TextBlock 
+                                        Grid.Column="0"
+                                        x:Name="originPathText"
+                                        Text="{Binding OriginPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Stretch"
+                                        TextWrapping="Wrap"
+                                        Margin="5, 0, 0, 0">
+                                    </TextBlock>
 
-                                <Button Grid.Column="2"
-                                        Content="Folder"
-                                        Command="{Binding RelativeSource={
-                                            RelativeSource FindAncestor, 
-                                            AncestorType={x:Type Window}},
-                                            Path=DataContext.SelectOriginFolderDialogCmd}"
-                                        HorizontalContentAlignment="Right">
-                                </Button>
+                                    <Button Grid.Column="1"
+                                            Content="File"
+                                            Margin="5, 0, 5, 0"
+                                            Command="{Binding RelativeSource={
+                                                RelativeSource FindAncestor, 
+                                                AncestorType={x:Type Window}},
+                                                Path=DataContext.SelectOriginFileDialogCmd}"
+                                            HorizontalContentAlignment="Right">
+                                        <Button.ToolTip>
+                                            Select a file.
+                                        </Button.ToolTip>
+                                    </Button>
 
-                            </Grid>
+                                    <Button Grid.Column="2"
+                                            Content="Folder"
+                                            Command="{Binding RelativeSource={
+                                                RelativeSource FindAncestor, 
+                                                AncestorType={x:Type Window}},
+                                                Path=DataContext.SelectOriginFolderDialogCmd}"
+                                            HorizontalContentAlignment="Right">
+                                        <Button.ToolTip>
+                                            Select a folder.
+                                        </Button.ToolTip>
+                                    </Button>
+
+                                </Grid>
+                            </Border>
+
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -156,50 +181,61 @@
                 <DataGridTemplateColumn
                     x:Name="backupPathColumn"
                     Header="Backup Path"
-                    Width="5*">
+                    Width="5*"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
+                            
+                            <Border
+                                x:Name="backupPathBorderBox">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                <Grid.Style>
-                                    <Style TargetType="{x:Type Grid}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding BackupPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
-                                                <Setter Property="Background" Value="Red"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Grid.Style>
+                                    <Grid.Style>
+                                        <Style TargetType="{x:Type Grid}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding BackupPath, Mode=OneWay, ValidatesOnDataErrors=True}" Value="True">
+                                                    <Setter Property="Background" Value="Red"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Grid.Style>
 
-                                <Grid.ToolTip>
-                                    <ToolTip>
-                                        <TextBlock Text="Path to destination folder"></TextBlock>
-                                    </ToolTip>
-                                </Grid.ToolTip>
+                                    <Grid.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock>
+                                                Path to destination folder.
+                                            </TextBlock>
+                                        </ToolTip>
+                                    </Grid.ToolTip>
 
-                                <TextBlock 
-                                    Grid.Column="0"
-                                    Text="{Binding BackupPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Stretch"
-                                    TextWrapping="Wrap"
-                                    Margin="5, 0, 0, 0"/>
+                                    <TextBlock 
+                                        Grid.Column="0"
+                                        Text="{Binding BackupPath, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Stretch"
+                                        TextWrapping="Wrap"
+                                        Margin="5, 0, 0, 0"/>
 
-                                <Button Grid.Column="1"
-                                        Content="Folder"
-                                        Margin="5, 0, 0, 0"
-                                        Command="{Binding RelativeSource={
-                                           RelativeSource FindAncestor, 
-                                           AncestorType={x:Type Window}},
-                                           Path=DataContext.SelectBackupFolderDialogCmd}"
-                                        HorizontalContentAlignment="Right">
-                                </Button>
+                                    <Button Grid.Column="1"
+                                            Content="Folder"
+                                            Margin="5, 0, 0, 0"
+                                            Command="{Binding RelativeSource={
+                                               RelativeSource FindAncestor, 
+                                               AncestorType={x:Type Window}},
+                                               Path=DataContext.SelectBackupFolderDialogCmd}"
+                                            HorizontalContentAlignment="Right">
+                                        <Button.ToolTip>
+                                            Select a folder.
+                                        </Button.ToolTip>
+                                    </Button>
 
-                            </Grid>
+                                </Grid>
+                            </Border>
+                            
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -208,21 +244,40 @@
                 <DataGridTemplateColumn
                     x:Name="lastBackupDayColumn"
                     Header="Last Backup"
-                    Width="Auto"
-                    IsReadOnly="True">
+                    Width="150"
+                    IsReadOnly="True"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
 
-                            <TextBlock 
+                            <Border
+                                x:Name="dateLastBackedUpBorderBox">
+                                <TextBlock 
                                     Grid.Column="0"
-                                    x:Name="originPathText"
+                                    x:Name="dateLastBackedUpText"
                                     Text="{Binding LastBackupDate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                                     VerticalAlignment="Center"
-                                    HorizontalAlignment="Stretch"
+                                    HorizontalAlignment="Center"
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 5, 0"
                                     Width="Auto">
-                            </TextBlock>
+                                </TextBlock>
+
+                                <Border.ToolTip>
+                                    <TextBlock>
+                                        Date of last backup.<LineBreak/>Red: Item has not yet been backed up.
+                                    </TextBlock>
+                                </Border.ToolTip>
+                            </Border>
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger
+                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="False">
+                                    <Setter TargetName="dateLastBackedUpBorderBox" Property="Background" Value="LightPink"/>
+                                    <Setter TargetName="dateLastBackedUpText" Property="TextBlock.Text" Value="Never"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
 
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -233,8 +288,8 @@
                     x:Name="backupFrequencyMultColumn"
                     Header="Frequency"
                     Binding="{Binding BackupFrequency, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    CanUserSort="False"
-                    Width="*">
+                    Width="Auto"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
 
                     <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
@@ -244,7 +299,7 @@
                                 </DataTrigger>
                             </Style.Triggers>
 
-                            <Setter Property="ToolTip" Value="Frequency of backups" />
+                            <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
                         </Style>
                     </DataGridTextColumn.CellStyle>
                     <DataGridTextColumn.ElementStyle>
@@ -268,7 +323,8 @@
                 <DataGridTemplateColumn
                     x:Name="periodColumn"
                     Header="Period"
-                    Width="*">
+                    Width="*"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
 
@@ -299,7 +355,8 @@
                 <DataGridTemplateColumn
                     x:Name="backupTimeOfDayColumn"
                     Header="Time"
-                    Width="95">
+                    Width="95"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
 
@@ -316,17 +373,19 @@
                 <!-- Date and time of next backup -->
                 <DataGridTemplateColumn
                     x:Name="nextBackupDateColumn"
-                    Header="Next Backup Date"
-                    Width="150">
+                    Header="Next Backup"
+                    Width="150"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
 
                             <xctk:DateTimePicker
-                                Name="lastBackupDate"
+                                x:Name="lastBackupDate"
                                 Value="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 Margin="5, 0, 5, 0"
                                 Format="Custom"
-                                FormatString="MM-dd-yyyy hh:mm tt">
+                                FormatString="MM-dd-yyyy hh:mm tt"
+                                ToolTip="At what time should this job run?">
                             </xctk:DateTimePicker>
 
                         </DataTemplate>
@@ -334,24 +393,57 @@
                 </DataGridTemplateColumn>
 
                 <!-- Toggle for backing up this file/folder -->
-                <DataGridCheckBoxColumn
+                <DataGridTemplateColumn
                     x:Name="backupEnabledColumn"
                     Header="Enabled"
-                    Binding="{Binding BackupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    Width="Auto">
-                    <DataGridCheckBoxColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="ToolTip" Value="Toggle backing up this file/folder" />
-                        </Style>
-                    </DataGridCheckBoxColumn.CellStyle>
-                    <DataGridCheckBoxColumn.ElementStyle>
-                        <Style TargetType="CheckBox">
-                            <Setter Property="HorizontalAlignment" Value="Center" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                        </Style>
-                    </DataGridCheckBoxColumn.ElementStyle>
-                </DataGridCheckBoxColumn>
+                    Width="Auto"
+                    HeaderStyle="{StaticResource CenterGridHeaderStyle}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border
+                                x:Name="backupEnabledBorderBox">
+                                <CheckBox
+                                IsChecked="{Binding BackupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <CheckBox.Style>
+                                        <Style TargetType="CheckBox">
+                                            <Setter Property="HorizontalAlignment" Value="Center" />
+                                            <Setter Property="VerticalAlignment" Value="Center" />
+                                        </Style>
+                                    </CheckBox.Style>
 
+                                    <CheckBox.ToolTip>
+                                        <TextBlock>
+                                            Is this backup enabled?
+                                        </TextBlock>
+                                    </CheckBox.ToolTip>
+                                </CheckBox>
+
+                                <Border.ToolTip>
+                                    <TextBlock>
+                                        Green: Task is scheduled.
+                                        <LineBreak/>
+                                        Red: Task is unscheduled.
+                                    </TextBlock>
+                                </Border.ToolTip>
+
+                            </Border>
+
+                            <DataTemplate.Triggers>
+                                <DataTrigger
+                                    Binding="{Binding BackupActive, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="True">
+                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightGreen"/>
+                                </DataTrigger>
+                                <DataTrigger
+                                    Binding="{Binding BackupActive, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="False">
+                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightPink"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 
@@ -372,9 +464,26 @@
             </Grid.ColumnDefinitions>
             
             <!-- Configuration buttons -->
-            <Button x:Name="SaveApplyConfigButton" Command="{Binding SaveAndApplyConfigCmd}" Grid.Row="1" Grid.Column="1" Margin="0, 5, 5, 0" Content="Save and Apply Settings"/>
-            <Button x:Name="LoadConfigButton" Command="{Binding LoadConfigCmd}" Grid.Row="1" Grid.Column="2" Margin="5, 5, 5, 0" Content="Load Settings"/>
-            <Button x:Name="ResetConfigButton" Command="{Binding ResetConfigCmd}" Grid.Row="1" Grid.Column="3" Margin="5, 5, 0, 0" Content="Reset Settings"/>
+            <Button
+                x:Name="SaveConfigButton"
+                Command="{Binding SaveConfigCmd}"
+                Grid.Row="1" Grid.Column="1"
+                Margin="0, 5, 5, 0"
+                Content="Save Settings">
+                <Button.ToolTip>
+                    Save the current configuration.
+                </Button.ToolTip>
+            </Button>
+            <Button
+                x:Name="ResetConfigButton"
+                Command="{Binding ResetConfigCmd}"
+                Grid.Row="1" Grid.Column="3"
+                Margin="5, 5, 0, 0"
+                Content="Reset Settings">
+                <Button.ToolTip>
+                    Delete the current configuration.
+                </Button.ToolTip>
+            </Button>
         </Grid>
     </Grid>
 </Window>

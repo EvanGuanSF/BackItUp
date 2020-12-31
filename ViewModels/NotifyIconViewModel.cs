@@ -1,6 +1,5 @@
 ﻿using BackItUp.ViewModels.Commands;
-using BackItUp.Views;
-using System.Diagnostics;
+using BackItUp.ViewModels.TaskManagement;
 using System.Windows;
 using System.Windows.Input;
 
@@ -76,7 +75,14 @@ namespace BackItUp.ViewModels
         {
             get
             {
-                return new DelegateCommand {CommandAction = () => Application.Current.Shutdown()};
+                return new DelegateCommand
+                {
+                    CommandAction = () =>
+                    {
+                        TaskManager.ShutDownScheduler();
+                        Application.Current.Shutdown();
+                    }
+                };
             }
         }
     }

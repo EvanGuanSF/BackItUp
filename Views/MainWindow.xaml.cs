@@ -1,7 +1,5 @@
 ﻿using BackItUp.ViewModels;
-using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows;
 
 namespace BackItUp.Views

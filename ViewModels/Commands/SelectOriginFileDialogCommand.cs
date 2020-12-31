@@ -8,7 +8,7 @@ namespace BackItUp.ViewModels.Commands
         private BackupInfoViewModel _ViewModel;
 
         /// <summary>
-        /// Initialize a new instance of the DeleteBackupItemCommand class.
+        /// Initialize a new instance of the SelectOriginFileDialogCommand class.
         /// </summary>
         /// <param name="viewModel"></param>
         public SelectOriginFileDialogCommand(BackupInfoViewModel viewModel) {

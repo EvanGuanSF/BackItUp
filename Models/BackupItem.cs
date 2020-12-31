@@ -25,6 +25,20 @@ namespace BackItUp.Models
             }
         }
 
+        private bool _HasBeenBackedUp;
+        public bool HasBeenBackedUp
+        {
+            get
+            {
+                return _HasBeenBackedUp;
+            }
+            set
+            {
+                _HasBeenBackedUp = value;
+                OnPropertyChanged("HasBeenBackedUp", value.ToString());
+            }
+        }
+
         private string _OriginPath;
         public string OriginPath
         {
@@ -67,24 +81,16 @@ namespace BackItUp.Models
             }
         }
 
-        private string _BackupFrequency;
-        public string BackupFrequency
+        private int _BackupFrequency;
+        public int BackupFrequency
         {
             get
             {
-                return _BackupFrequency.ToString();
+                return _BackupFrequency;
             }
             set
             {
-                if (value != null &&
-                    value.ToString() == "")
-                {
-                    _BackupFrequency = "";
-                }
-                else
-                {
-                    _BackupFrequency = value.ToString();
-                }
+                _BackupFrequency = value;
                 OnPropertyChanged("BackupFrequency", value.ToString());
             }
         }
@@ -98,16 +104,7 @@ namespace BackItUp.Models
             }
             set
             {
-                int temp = 1;
-                try
-                {
-                    temp = (int)value;
-                } catch (Exception e)
-                {
-                    Debug.WriteLine(e.Message);
-                }
-
-                _BackupPeriod = temp;
+                _BackupPeriod = value;
                 OnPropertyChanged("BackupPeriod", value.ToString());
             }
         }
@@ -168,6 +165,21 @@ namespace BackItUp.Models
             }
         }
 
+        [field: NonSerialized]
+        private bool _BackupActive;
+        public bool BackupActive
+        {
+            get
+            {
+                return _BackupActive;
+            }
+            set
+            {
+                _BackupActive = value;
+                OnPropertyChanged("BackupActive", value.ToString());
+            }
+        }
+
         #endregion
 
         #region Member Methods
@@ -183,15 +195,17 @@ namespace BackItUp.Models
         public void LoadDefaultValues()
         {
             HashCode = "";
+            HasBeenBackedUp = false;
             OriginPath = "";
             BackupPath = "";
             LastBackupDate = DateTime.Now;
-            BackupFrequency = "1";
+            BackupFrequency = 1;
             BackupPeriod = 1;
             BackupInterval = TimeSpan.FromDays(1);
             BackupTime = DateTime.Now;
             NextBackupDate = DateTime.Now.AddDays(1);
             BackupEnabled = true;
+            BackupActive = false;
         }
 
         #endregion
@@ -239,13 +253,14 @@ namespace BackItUp.Models
         public void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             info.AddValue("HashCode", HashCode);
+            info.AddValue("HasBeenBackedUp", HasBeenBackedUp);
             info.AddValue("OriginPath", OriginPath);
             info.AddValue("BackupPath", BackupPath);
             info.AddValue("LastBackupDate", LastBackupDate);
             info.AddValue("BackupFrequency", BackupFrequency);
             info.AddValue("BackupPeriod", BackupPeriod);
-            info.AddValue("BackupInterval", BackupInterval);
             info.AddValue("BackupTime", BackupTime);
+            info.AddValue("BackupInterval", BackupInterval);
             info.AddValue("NextBackupDate", NextBackupDate);
             info.AddValue("BackupEnabled", BackupEnabled);
         }
@@ -258,15 +273,17 @@ namespace BackItUp.Models
         public BackupItem(SerializationInfo info, StreamingContext context)
         {
             HashCode = (string)info.GetValue("HashCode", typeof(string));
+            HasBeenBackedUp = (bool)info.GetValue("HasBeenBackedUp", typeof(bool));
             OriginPath = (string)info.GetValue("OriginPath", typeof(string));
             BackupPath = (string)info.GetValue("BackupPath", typeof(string));
             LastBackupDate = (DateTime)info.GetValue("LastBackupDate", typeof(DateTime));
-            BackupFrequency = (string)info.GetValue("BackupFrequency", typeof(string));
+            BackupFrequency = (int)info.GetValue("BackupFrequency", typeof(int));
             BackupPeriod = (int)info.GetValue("BackupPeriod", typeof(int));
-            BackupInterval = (TimeSpan)info.GetValue("BackupInterval", typeof(TimeSpan));
             BackupTime = (DateTime)info.GetValue("BackupTime", typeof(DateTime));
+            BackupInterval = (TimeSpan)info.GetValue("BackupInterval", typeof(TimeSpan));
             NextBackupDate = (DateTime)info.GetValue("NextBackupDate", typeof(DateTime));
             BackupEnabled = (bool)info.GetValue("BackupEnabled", typeof(bool));
+            BackupActive = false;
         }
 
         #endregion
@@ -317,7 +334,7 @@ namespace BackItUp.Models
             {
                 case "OriginPath":
                     {
-                        error = ValidateOriginPath(OriginPath, BackupPath);
+                        error = ValidateOriginPath(OriginPath);
                         break;
                     }
                 case "BackupPath":

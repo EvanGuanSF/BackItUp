@@ -18,7 +18,7 @@ namespace BackItUp
             new MainWindow();
             // Initialize the tray icon.
             notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
-            notifyIcon.DataContext = new NotifyIconViewModel.NotifyIconViewModel();
+            notifyIcon.DataContext = new BackItUp.ViewModels.NotifyIconViewModel();
         }
     }
 }

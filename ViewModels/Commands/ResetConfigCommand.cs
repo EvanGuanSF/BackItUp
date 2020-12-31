@@ -9,7 +9,7 @@ namespace BackItUp.ViewModels.Commands
         private BackupInfoViewModel _ViewModel;
 
         /// <summary>
-        /// Initialize a new instance of the DeleteBackupItemCommand class.
+        /// Initialize a new instance of the ResetConfigCommand class.
         /// </summary>
         /// <param name="viewModel"></param>
         public ResetConfigCommand(BackupInfoViewModel viewModel) {
@@ -25,7 +25,7 @@ namespace BackItUp.ViewModels.Commands
 
         public bool CanExecute(object parameter)
         {
-            return Serializer.isSerializerIdle;
+            return Serializer.IsSerializerIdle;
         }
 
         public void Execute(object parameter)

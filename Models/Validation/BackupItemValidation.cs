@@ -9,22 +9,23 @@ namespace BackItUp.Models.Validation
     static class BackupItemValidation
     {
         /// <summary>
-        /// Validates that the directory or file at the given origin path exists and is different from the backup path.
+        /// Validates that the directory or file at the given origin path exists.
         /// </summary>
         /// <param name="originPath"></param>
         /// <param name="backupPath"></param>
         /// <returns></returns>
-        public static string ValidateOriginPath(string originPath, string backupPath)
+        public static string ValidateOriginPath(string originPath)
         {
             //Debug.WriteLine(string.Format("ValidateOriginPath checking {0} and {1}", originPath, backupPath));
 
-            if (!(Directory.Exists(originPath) ||
+            if (!string.IsNullOrEmpty(originPath) &&
+                (Directory.Exists(originPath) ||
                 File.Exists(originPath)))
             {
-                return "Origin path is invalid.";
+                return null;
             }
 
-            return null;
+            return "Origin path is invalid.";
         }
 
         /// <summary>
@@ -54,19 +55,13 @@ namespace BackItUp.Models.Validation
         /// <summary>
         /// Validator for frequency of backups.
         /// </summary>
-        /// <param name="frequencyAsString"></param>
+        /// <param name="frequency"></param>
         /// <returns></returns>
-        public static string ValidateBackupFrequency(string frequencyAsString)
+        public static string ValidateBackupFrequency(int frequency)
         {
-            int temp;
-
-            if(frequencyAsString != null &&
-               frequencyAsString.Length > 0 &&
-               frequencyAsString.Length < 4 &&
-               int.TryParse(frequencyAsString, out temp))
+            if(frequency > 0 && frequency < 1000)
             {
-                if(temp > 0)
-                    return null;
+                return null;
             }
 
             return "Backup Frequency must be 1-3 digit integer.";

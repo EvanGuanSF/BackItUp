@@ -1,7 +1,7 @@
 ﻿using BackItUp.Models;
 using BackItUp.ViewModels.Serialization;
 using BackItUp.ViewModels.Commands;
-using BackItUp.ViewModels.HelperMethods;
+using BackItUp.ViewModels.HashCodeGenerator;
 using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.ObjectModel;
@@ -9,14 +9,18 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
+using BackItUp.ViewModels.TaskManagement;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace BackItUp.ViewModels
 {
     internal class BackupInfoViewModel : INotifyPropertyChanged
     {
-        private ObservableCollection<BackupItem> _BackupInfo;
-        private ObservableCollection<BackupPeriodList> _BackupPeriodList;
-        private int _SelectedBackupItemIndex;
+        private static ObservableCollection<BackupItem> _BackupInfo;
+        private static ObservableCollection<BackupPeriodList> _BackupPeriodList;
+        private static int _SelectedBackupItemIndex;
+        private static BackupInfoViewModel _ActiveViewModel;
 
         #region Member Methods
 
@@ -25,8 +29,16 @@ namespace BackItUp.ViewModels
         /// </summary>
         public BackupInfoViewModel()
         {
+            // Set a ref to self for static member usage.
+            _ActiveViewModel = this;
+
+            // For testing purposes.
+            //_BackupInfo = new ObservableCollection<BackupItem>();
+
             // Prep the backupinfo for consumption.
             InitBackupInfo();
+            // Reactivate any previously active jobs from the serialized data.
+            ToggleAllJobs();
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
@@ -35,13 +47,53 @@ namespace BackItUp.ViewModels
             SelectOriginFileDialogCmd = new SelectOriginFileDialogCommand(this);
             SelectOriginFolderDialogCmd = new SelectOriginFolderDialogCommand(this);
             SelectBackupFolderDialogCmd = new SelectBackupFolderDialogCommand(this);
-            SaveAndApplyConfigCmd = new SaveApplyConfigCommand(this);
+            SaveConfigCmd = new SaveConfigCommand();
             LoadConfigCmd = new LoadConfigCommand(this);
             ResetConfigCmd = new ResetConfigCommand(this);
+
+            // For testing purposes.
+            //TestTasks();
         }
 
         /// <summary>
-        /// Gets the backup information collection.
+        /// For testing purposes.
+        /// </summary>
+        /// <returns></returns>
+        private async Task TestTasks()
+        {
+            TaskManager.InitScheduler();
+
+
+            BackupItem testItem = new BackupItem
+            {
+                OriginPath = @"E:\Test Origin\test 1 2 3\",
+                BackupPath = @"E:\Test Backup\",
+                BackupInterval = TimeSpan.FromSeconds(10),
+                NextBackupDate = DateTime.Now.AddSeconds(3)
+            };
+            testItem.HashCode = Hasher.StringHasher(testItem.OriginPath + testItem.BackupPath);
+
+            _BackupInfo.Add(testItem);
+            _BackupInfo[0].PropertyChanged += ModelPropertyChanged;
+            await TaskManager.QueueBackupJob(testItem);
+
+
+            testItem = new BackupItem()
+            {
+                OriginPath = @"E:\Test Origin\The Viewer.exe",
+                BackupPath = @"E:\Test Backup\",
+                BackupInterval = TimeSpan.FromSeconds(10),
+                NextBackupDate = DateTime.Now.AddSeconds(4)
+            };
+            testItem.HashCode = Hasher.StringHasher(testItem.OriginPath + testItem.BackupPath);
+
+            _BackupInfo.Add(testItem);
+            _BackupInfo[1].PropertyChanged += ModelPropertyChanged;
+            await TaskManager.QueueBackupJob(testItem);
+        }
+
+        /// <summary>
+        /// Getter/setter for the BackupInfo collection.
         /// </summary>
         public ObservableCollection<BackupItem> BackupInfo
         {
@@ -91,17 +143,17 @@ namespace BackItUp.ViewModels
         /// Paths that do not exist are still valid.
         /// Do not worry about permissions issues.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>bool indicating validity of both paths</returns>
         public bool IsBackupInfoValid()
         {
             foreach(BackupItem item in BackupInfo)
             {
                 // Check the origin and then backup paths. If any irregularities are found, then do not allow the user to save/apply the config.
-                if(!(!String.IsNullOrWhiteSpace(item.OriginPath)
+                if(!(!string.IsNullOrWhiteSpace(item.OriginPath)
                     && item.OriginPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
                     && Path.IsPathRooted(item.OriginPath)
                     && !Path.GetPathRoot(item.OriginPath).Equals(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)) ||
-                    !(!String.IsNullOrWhiteSpace(item.BackupPath)
+                    !(!string.IsNullOrWhiteSpace(item.BackupPath)
                     && item.BackupPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
                     && Path.IsPathRooted(item.BackupPath)
                     && !Path.GetPathRoot(item.BackupPath).Equals(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)))
@@ -122,7 +174,7 @@ namespace BackItUp.ViewModels
         public ICommand SelectOriginFileDialogCmd { get; set; }
         public ICommand SelectOriginFolderDialogCmd { get; set; }
         public ICommand SelectBackupFolderDialogCmd { get; set; }
-        public ICommand SaveAndApplyConfigCmd { get; set; }
+        public ICommand SaveConfigCmd { get; set; }
         public ICommand LoadConfigCmd { get; set; }
         public ICommand ResetConfigCmd { get; set; }
 
@@ -146,37 +198,68 @@ namespace BackItUp.ViewModels
             {
                 HandleBackupDateTimeChanged();
             }
+            if(e.PropertyName == "BackupEnabled")
+            {
+                ToggleJobBySelectedIndex();
+            }
         }
 
         /// <summary>
-        /// Update the NextBackupDate of the current item if a new frequency, perion, or time of day is specified.
+        /// Update the NextBackupDate of the current item if a new frequency, period, or time of day is specified.
         /// </summary>
         private void HandleBackupDateTimeChanged()
         {
+            BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
+
+            // Remove any backup jobs associated with the old hash.
+            TaskManager.RemoveBackupJob(selectedItem.HashCode);
+
             // Calculate the number of days to add, then create the new DateTime object.
-            int daysToAdd = int.Parse(BackupInfo[SelectedBackupItemIndex].BackupFrequency) * BackupInfo[SelectedBackupItemIndex].BackupPeriod;
-            DateTime newDateAndTime = new DateTime(BackupInfo[SelectedBackupItemIndex].LastBackupDate.Year,
-                BackupInfo[SelectedBackupItemIndex].LastBackupDate.Month,
-                BackupInfo[SelectedBackupItemIndex].LastBackupDate.Day,
-                BackupInfo[SelectedBackupItemIndex].BackupTime.Hour,
-                BackupInfo[SelectedBackupItemIndex].BackupTime.Minute,
+            int daysToAdd = selectedItem.BackupFrequency * selectedItem.BackupPeriod;
+
+            DateTime newDateAndTime = new DateTime(selectedItem.LastBackupDate.Year,
+                selectedItem.LastBackupDate.Month,
+                selectedItem.LastBackupDate.Day,
+                selectedItem.BackupTime.Hour,
+                selectedItem.BackupTime.Minute,
                 00).AddDays(daysToAdd);
 
             // Update the NextBackupDate with the new object/value and notify the UI.
-            BackupInfo[SelectedBackupItemIndex].NextBackupDate = newDateAndTime;
+            selectedItem.NextBackupDate = newDateAndTime;
+            // Also update the BackupInterval.
+            selectedItem.BackupInterval = new TimeSpan(
+                daysToAdd,
+                selectedItem.BackupTime.Hour,
+                selectedItem.BackupTime.Minute,
+                0
+                );
+            OnPropertyChanged("BackupInterval");
             OnPropertyChanged("NextBackupDate");
+
+            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
+            ToggleJobBySelectedIndex();
         }
 
         #endregion
 
         #region Initializers
 
+        /// <summary>
+        /// Default initializer.
+        /// </summary>
         private void InitBackupInfo()
         {
             LoadConfig();
+            foreach(BackupItem item in BackupInfo)
+            {
+                item.PropertyChanged += ModelPropertyChanged;
+            }
             OnPropertyChanged("BackupList");
         }
 
+        /// <summary>
+        /// Default initializer for the period selection combobox.
+        /// </summary>
         private void InitBackupPeriodList()
         {
             _BackupPeriodList = new ObservableCollection<BackupPeriodList>
@@ -193,7 +276,7 @@ namespace BackItUp.ViewModels
         #region Command Helper Methods
 
         /// <summary>
-        /// Indicates whether or not the datagrid can delete the row.
+        /// Retrun a bool indicating whether or not the datagrid can delete the selected row.
         /// </summary>
         public bool CanDeleteItem
         {
@@ -213,6 +296,9 @@ namespace BackItUp.ViewModels
             if (!File.Exists(filePath))
                 return;
 
+            // Remove any backup jobs associated with the old hash.
+            TaskManager.RemoveBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+
             BackupInfo[SelectedBackupItemIndex].OriginPath = filePath;
 
             UpdateItemHash();
@@ -227,6 +313,12 @@ namespace BackItUp.ViewModels
 
             if (!Directory.Exists(folderPath))
                 return;
+
+            // Remove any backup jobs associated with the old hash.
+            TaskManager.RemoveBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+
+            if (!folderPath.EndsWith("\\"))
+                folderPath += "\\";
 
             BackupInfo[SelectedBackupItemIndex].OriginPath = folderPath;
 
@@ -243,29 +335,65 @@ namespace BackItUp.ViewModels
             if (!Directory.Exists(folderPath))
                 return;
 
+            // Remove any backup jobs associated with the old hash.
+            TaskManager.RemoveBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+
+            if (!folderPath.EndsWith("\\"))
+                folderPath += "\\";
+
             BackupInfo[SelectedBackupItemIndex].BackupPath = folderPath;
 
             UpdateItemHash();
         }
 
         /// <summary>
-        /// Delete the selected BackupInfo item from the collection if appicable.
+        /// Delete the selected BackupInfo item via index from the GUI from the collection if applicable.
         /// </summary>
-        public void DeleteSelectedBackupItem()
+        public void DeleteBackupItemBySelectedIndex()
         {
             if (_SelectedBackupItemIndex == -1)
                 return;
 
             // Remove the selected row.
+            TaskManager.RemoveBackupJob(_BackupInfo[_SelectedBackupItemIndex].HashCode);
             _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
-            // Trigger updates.
             SelectedBackupItemIndex = BackupInfo.Count - 1;
-            OnPropertyChanged("BackupList");
-            OnPropertyChanged("SelectedBackupItem");
         }
 
         /// <summary>
-        /// Adds a backup item to the backupitem collection.
+        /// Delete the selected BackupInfo item via HashCode from the collection if applicable.
+        /// If the code does not match anything in the list, then we have an orphan; stop the job.
+        /// </summary>
+        public static void DeleteBackupItemByHashCode(string hashCode)
+        {
+            Debug.WriteLine("Attempting to remove job with hash: " + hashCode);
+
+            if (hashCode.Length != 64)
+                return;
+
+            BackupItem itemToRemove = null;
+
+            foreach(BackupItem backupItem in _ActiveViewModel.BackupInfo)
+            {
+                Debug.WriteLine(string.Format("Checking against hash: ", backupItem.HashCode.Substring(0, 5)));
+                if(backupItem.HashCode == hashCode)
+                {
+                    itemToRemove = backupItem;
+                    break;
+                }
+            }
+
+            // If the item exists, remove it.
+            if(itemToRemove != null)
+            {
+                Debug.WriteLine("Removing item from list.");
+                _ActiveViewModel.BackupInfo.Remove(itemToRemove);
+                _ActiveViewModel.SelectedBackupItemIndex = _BackupInfo.Count - 1;
+            }
+        }
+
+        /// <summary>
+        /// Add a backup item to the BackupInfo collection.
         /// </summary>
         public void AddBackupItem()
         {
@@ -277,25 +405,30 @@ namespace BackItUp.ViewModels
         /// <summary>
         /// Command helper for saving the current BackupInfo.
         /// </summary>
-        public void SaveAndApplyConfig()
+        public static void SaveConfig()
         {
-            Serializer.SaveConfigToFile(BackupInfo);
+            //Debug.WriteLine("Saving config...");
+            Serializer.SaveConfigToFile(_ActiveViewModel.BackupInfo);
         }
 
         /// <summary>
-        /// Attempt to load the config file from the .dat file.
+        /// Load the backup config file from the .dat file.
         /// </summary>
         public void LoadConfig()
         {
             BackupInfo = Serializer.LoadConfigFromFile();
             if (BackupInfo.Count == 0)
-                BackupInfo.Add(new BackupItem());
+                AddBackupItem();
         }
 
+        /// <summary>
+        /// Discard the old BackupInfo collection and create a new one, then save it.
+        /// </summary>
         public void ResetConfig()
         {
             BackupInfo = new ObservableCollection<BackupItem>();
-            BackupInfo.Add(new BackupItem());
+            AddBackupItem();
+            SaveConfig();
         }
 
         #endregion
@@ -304,6 +437,7 @@ namespace BackItUp.ViewModels
 
         /// <summary>
         /// Updates the HashCode for the current item if the origin and backup fields are populated.
+        /// If either is invalid, reset the hashCode on the item.
         /// </summary>
         /// <param name="index"></param>
         private void UpdateItemHash()
@@ -311,19 +445,41 @@ namespace BackItUp.ViewModels
             if(!string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].OriginPath) &&
                !string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].BackupPath))
             {
-                BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(BackupInfo[_SelectedBackupItemIndex].OriginPath + BackupInfo[_SelectedBackupItemIndex].OriginPath);
-                ReinitializeDuplicateBackups();
+                //Debug.WriteLine(string.Format("Hashing: '{0}' and '{1}'", BackupInfo[_SelectedBackupItemIndex].OriginPath, BackupInfo[_SelectedBackupItemIndex].BackupPath));
+
+                // Remove the hashcode associated with the current hash before we get rid of it.
+                TaskManager.RemoveBackupJob(BackupInfo[_SelectedBackupItemIndex].HashCode);
+
+                // Then calculate the new hash for the object.
+                BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(
+                    BackupInfo[_SelectedBackupItemIndex].OriginPath +
+                    BackupInfo[_SelectedBackupItemIndex].BackupPath);
+
+                // Check for duplicate origin and backup path items.
+                if(!ReinitializeDuplicateBackups())
+                {
+                    // If there are no duplicates, then check if the item is enabled.
+                    // If it is, we need to queue a new job with the new hash.
+                    if(BackupInfo[_SelectedBackupItemIndex].BackupEnabled)
+                    {
+                        TaskManager.QueueBackupJob(BackupInfo[_SelectedBackupItemIndex]);
+                    }
+                }
+            }
+            else
+            {
+                BackupInfo[_SelectedBackupItemIndex].HashCode = "";
             }
         }
 
         /// <summary>
-        /// Resets the current backinfo item if the same hash code already exists (same origin/backup paths as an existing item).
+        /// Checks for and resets the current BackupItem if the same hash code already exists (same origin/backup paths as an existing item).
         /// </summary>
-        /// <param name="newHashCode"></param>
-        private void ReinitializeDuplicateBackups()
+        /// <returns>Bool indicating if there was a duplicate.</returns>
+        private bool ReinitializeDuplicateBackups()
         {
             if (BackupInfo.Count == 0)
-                return;
+                return false;
 
             string newHashCode = BackupInfo[BackupInfo.Count - 1].HashCode;
 
@@ -332,6 +488,187 @@ namespace BackItUp.ViewModels
                 if(newHashCode == BackupInfo[i].HashCode)
                 {
                     BackupInfo[_SelectedBackupItemIndex].LoadDefaultValues();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Update the NextBackupDate of the BackupItem according to HashCode.
+        /// Increments the NextBackupDate by one BackupInterval of time.
+        /// </summary>
+        public static void UpdateNextBackupDate(string hashCode)
+        {
+            BackupItem itemToUpdate = null;
+
+            foreach(BackupItem itm in _BackupInfo)
+            {
+                if(itm.HashCode == hashCode)
+                {
+                    itemToUpdate = itm;
+                    break;
+                }
+            }
+
+            if(itemToUpdate == null)
+            {
+                return;
+            }
+
+            // Calculate the number of days to add, then create the new DateTime object.
+            int daysToAdd = itemToUpdate.BackupFrequency * itemToUpdate.BackupPeriod;
+            DateTime newDateAndTime = new DateTime(itemToUpdate.NextBackupDate.Year,
+                itemToUpdate.NextBackupDate.Month,
+                itemToUpdate.NextBackupDate.Day,
+                itemToUpdate.BackupTime.Hour,
+                itemToUpdate.BackupTime.Minute,
+                00).AddDays(daysToAdd);
+
+            // Update the NextBackupDate with the new object/value and notify the UI.
+            itemToUpdate.NextBackupDate = newDateAndTime;
+
+            _ActiveViewModel.OnPropertyChanged("BackupInfo");
+        }
+
+        /// <summary>
+        /// Checks the BackupInfo collection for an item with the given hash code.
+        /// If it does not exist, then notify the TaskManager to stop the job with that hash code.
+        /// </summary>
+        /// <param name="hashCode"></param>
+        /// <returns>Returns true if the hash code is an orphan.</returns>
+        public static bool IsHashCodeOrphaned(string hashCode)
+        {
+            bool itemExists = false;
+
+            foreach (BackupItem backupItem in _ActiveViewModel.BackupInfo)
+            {
+                if (backupItem.HashCode == hashCode)
+                {
+                    itemExists = true;
+                    break;
+                }
+            }
+
+            // If we did not find the item in the collection, then delete the job.
+            if (!itemExists)
+            {
+                TaskManager.RemoveBackupJob(hashCode);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Toggles the job associated to the BackupItem in BackupInfo[SelectedIndex].
+        /// </summary>
+        public static void ToggleJobBySelectedIndex()
+        {
+            BackupItem currentItem = _ActiveViewModel.BackupInfo[_SelectedBackupItemIndex];
+
+            if(currentItem.BackupEnabled)
+            {
+                // We do not know how long ago the previous job was de-activated.
+                // If the job is enabled and the date has passed, the copy job will run immediately.
+                // To prevent this, recalculate the next backup date of the newly enabled item if its NextBackupDate is before the current date and time.
+                // Keep going until the NextBackupDate is after the current date and time if necessary.
+                while(currentItem.NextBackupDate < DateTime.Now)
+                {
+                    UpdateNextBackupDate(currentItem.HashCode);
+                }
+                TaskManager.QueueBackupJob(currentItem);
+            }
+            else
+            {
+                TaskManager.RemoveBackupJob(currentItem.HashCode);
+            }
+        }
+
+        /// <summary>
+        /// Toggles all jobs in the BackupInfo collection.
+        /// Primarily used to reactivate all previous jobs on application start.
+        /// </summary>
+        public static void ToggleAllJobs()
+        {
+            foreach (BackupItem currentItem in _ActiveViewModel.BackupInfo)
+            {
+                if (currentItem.BackupEnabled)
+                {
+                    TaskManager.QueueBackupJob(currentItem);
+                }
+                else
+                {
+                    TaskManager.RemoveBackupJob(currentItem.HashCode);
+                }
+            }
+        }
+
+        #endregion
+
+        #region TaskManager and Job Helpers
+
+        /// <summary>
+        /// Returns a list of all "enabled" BackupItem hash codes.
+        /// </summary>
+        /// <returns></returns>
+        public static List<string> GetAllActiveHashCodes()
+        {
+            List<string> hashCodeList = new List<string>();
+
+            foreach (BackupItem item in _ActiveViewModel.BackupInfo)
+            {
+                if (item.BackupEnabled &&
+                    !string.IsNullOrWhiteSpace(item.HashCode) &&
+                    item.HashCode.Length == 64)
+                {
+                    hashCodeList.Add(item.HashCode);
+                }
+            }
+
+            return hashCodeList;
+        }
+
+        /// <summary>
+        /// Sets a property on a BackupItem indicating whether or not it has a running job associated with it.
+        /// </summary>
+        /// <param name="hashCode"></param>
+        /// <param name="isActive"></param>
+        public static void SetBackupItemActivity(string hashCode, bool isActive)
+        {
+            foreach (BackupItem item in _ActiveViewModel.BackupInfo)
+            {
+                if (!string.IsNullOrWhiteSpace(item.HashCode) &&
+                    item.HashCode.Length == 64 &&
+                    item.HashCode == hashCode)
+                {
+                    //Debug.WriteLine(string.Format("{0} is now {1}", hashCode, isActive == true ? "active" : "inactive"));
+                    item.BackupActive = isActive;
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Changes the BackupItem.HasBeenBackedUp prop via associated hashCode to true,
+        /// indicating that the item has been backed up at least once.
+        /// </summary>
+        /// <param name="hashCode"></param>
+        public static void NotifyItemHasBeenBackedUp(string hashCode)
+        {
+            //Debug.WriteLine(string.Format("NotifyItemHasBeenBackedUp {0}", hashCode));
+
+            foreach (BackupItem item in _ActiveViewModel.BackupInfo)
+            {
+                if (!string.IsNullOrWhiteSpace(item.HashCode) &&
+                    item.HashCode.Length == 64 &&
+                    item.HashCode == hashCode)
+                {
+                    // Update the last backup date
+                    item.LastBackupDate = item.NextBackupDate;
+
+                    item.HasBeenBackedUp = true;
+                    break;
                 }
             }
         }
@@ -346,26 +683,30 @@ namespace BackItUp.ViewModels
         /// <returns></returns>
         private string ShowSelectOriginFileDialog()
         {
-            VistaOpenFileDialog selectFileDialog = new VistaOpenFileDialog();
-            selectFileDialog.Multiselect = false;
-            selectFileDialog.ValidateNames = true;
-            selectFileDialog.AddExtension = true;
-            selectFileDialog.CheckFileExists = true;
-            selectFileDialog.CheckPathExists = true;
-            selectFileDialog.Title = "Select a file";
+            VistaOpenFileDialog selectFileDialog = new VistaOpenFileDialog
+            {
+                Multiselect = false,
+                ValidateNames = true,
+                AddExtension = true,
+                CheckFileExists = true,
+                CheckPathExists = true,
+                Title = "Select a file"
+            };
             selectFileDialog.ShowDialog();
 
             return selectFileDialog.FileName;
         }
 
         /// <summary>
-        /// Launch a dialog window so that the user can select a path.
+        /// Launches a select path dialog and returns the selected path.
         /// </summary>
         private string ShowSelectPathDialog()
         {
-            VistaFolderBrowserDialog selectFolderDialog = new VistaFolderBrowserDialog();
-            selectFolderDialog.Description = "Select a path";
-            selectFolderDialog.UseDescriptionForTitle = true;
+            VistaFolderBrowserDialog selectFolderDialog = new VistaFolderBrowserDialog
+            {
+                Description = "Select a path",
+                UseDescriptionForTitle = true
+            };
             selectFolderDialog.ShowDialog();
 
             return selectFolderDialog.SelectedPath;

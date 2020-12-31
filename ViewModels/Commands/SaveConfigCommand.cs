@@ -4,18 +4,8 @@ using System.Windows.Input;
 
 namespace BackItUp.ViewModels.Commands
 {
-    internal class SaveApplyConfigCommand : ICommand
+    internal class SaveConfigCommand : ICommand
     {
-        private BackupInfoViewModel _ViewModel;
-
-        /// <summary>
-        /// Initialize a new instance of the DeleteBackupItemCommand class.
-        /// </summary>
-        /// <param name="viewModel"></param>
-        public SaveApplyConfigCommand(BackupInfoViewModel viewModel) {
-            _ViewModel = viewModel;
-        }
-
         #region ICommand members
         public event EventHandler CanExecuteChanged
         {
@@ -25,12 +15,12 @@ namespace BackItUp.ViewModels.Commands
 
         public bool CanExecute(object parameter)
         {
-            return _ViewModel.IsBackupInfoValid() && Serializer.isSerializerIdle;
+            return Serializer.IsSerializerIdle;
         }
 
         public void Execute(object parameter)
         {
-            _ViewModel.SaveAndApplyConfig();
+            BackupInfoViewModel.SaveConfig();
         }
         #endregion
     }

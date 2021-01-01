@@ -1,17 +1,17 @@
 ﻿using BackItUp.Models;
-using BackItUp.ViewModels.Serialization;
 using BackItUp.ViewModels.Commands;
 using BackItUp.ViewModels.HashCodeGenerator;
+using BackItUp.ViewModels.Serialization;
+using BackItUp.ViewModels.TaskManagement;
 using Ookii.Dialogs.Wpf;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Input;
-using BackItUp.ViewModels.TaskManagement;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Windows.Input;
 
 namespace BackItUp.ViewModels
 {
@@ -31,6 +31,7 @@ namespace BackItUp.ViewModels
         {
             // Set a ref to self for static member usage.
             _ActiveViewModel = this;
+            TaskManager.InitScheduler();
 
             // For testing purposes.
             //_BackupInfo = new ObservableCollection<BackupItem>();
@@ -61,9 +62,6 @@ namespace BackItUp.ViewModels
         /// <returns></returns>
         private async Task TestTasks()
         {
-            TaskManager.InitScheduler();
-
-
             BackupItem testItem = new BackupItem
             {
                 OriginPath = @"E:\Test Origin\test 1 2 3\",
@@ -236,7 +234,7 @@ namespace BackItUp.ViewModels
             OnPropertyChanged("BackupInterval");
             OnPropertyChanged("NextBackupDate");
 
-            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
+            // Call ToggleJobBySelectedIndex to re-queue the job if the BackEnabled is set to true.
             ToggleJobBySelectedIndex();
         }
 
@@ -570,7 +568,7 @@ namespace BackItUp.ViewModels
             if(currentItem.BackupEnabled)
             {
                 // We do not know how long ago the previous job was de-activated.
-                // If the job is enabled and the date has passed, the copy job will run immediately.
+                // If the job is enabled and the NextBackupDate has passed, the copy job will run immediately.
                 // To prevent this, recalculate the next backup date of the newly enabled item if its NextBackupDate is before the current date and time.
                 // Keep going until the NextBackupDate is after the current date and time if necessary.
                 while(currentItem.NextBackupDate < DateTime.Now)
@@ -634,7 +632,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="isActive"></param>
-        public static void SetBackupItemActivity(string hashCode, bool isActive)
+        public static void SetBackupItemActive(string hashCode, bool isActive)
         {
             foreach (BackupItem item in _ActiveViewModel.BackupInfo)
             {

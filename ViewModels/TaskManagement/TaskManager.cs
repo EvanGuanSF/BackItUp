@@ -57,7 +57,7 @@ namespace BackItUp.ViewModels.TaskManagement
         public static async Task QueueBackupJob(BackupItem backupItem)
         {
             //Debug.WriteLine(string.Format("'{0}' Started at: {1}", backupItem.HashCode.Substring(0, 5), DateTime.Now));
-            //Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} second(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Seconds));
+            //Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} days(s)", backupItem.HashCode.Substring(0, 5), DateTime.Now.AddSeconds(10), backupItem.BackupInterval.Days));
             try
             {
                 // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
@@ -75,14 +75,14 @@ namespace BackItUp.ViewModels.TaskManagement
                     await scheduler.DeleteJob(jobID);
                 }
 
-                // define the job and tie it to our CopyJob class
+                // Define the CopyJob.
                 IJobDetail job = JobBuilder.Create<BackupJob>()
                     .WithIdentity(jobID)
                     .UsingJobData("originPath", backupItem.OriginPath)
                     .UsingJobData("backupPath", backupItem.BackupPath)
                     .Build();
 
-                // Trigger the job to run now, and then repeat every 10 seconds
+                // Setup the job trigger.
                 ITrigger trigger = TriggerBuilder.Create()
                     .WithIdentity(backupItem.HashCode, "ActiveBackups")
                     .StartAt(backupItem.NextBackupDate)
@@ -91,13 +91,15 @@ namespace BackItUp.ViewModels.TaskManagement
                         .RepeatForever())
                     .Build();
 
-                // Tell quartz to schedule the job using our trigger
+                // Tell quartz to schedule the job using our trigger.
                 await scheduler.ScheduleJob(job, trigger);
 
                 // Update the BackupItem to indicate that its BackupJob has been successfully queued.
-                BackupInfoViewModel.SetBackupItemActivity(backupItem.HashCode, true);
+                BackupInfoViewModel.SetBackupItemActive(backupItem.HashCode, true);
 
                 BackupInfoViewModel.SaveConfig();
+
+                //Debug.WriteLine("Job queued, saving config...");
             }
             catch (Exception e)
             {
@@ -122,10 +124,11 @@ namespace BackItUp.ViewModels.TaskManagement
                 if (await scheduler.CheckExists(jobToCheck))
                 {
                     await scheduler.DeleteJob(jobToCheck);
-                    BackupInfoViewModel.SetBackupItemActivity(backupItemHashCode, false);
+                    BackupInfoViewModel.SetBackupItemActive(backupItemHashCode, false);
                 }
 
                 BackupInfoViewModel.SaveConfig();
+                //Debug.WriteLine("Job de-queued, saving config...");
             }
             catch (Exception e)
             {

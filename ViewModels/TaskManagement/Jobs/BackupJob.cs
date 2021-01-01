@@ -59,7 +59,7 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
                     foreach (string file_name in Directory.GetFiles(originPath, "*", SearchOption.AllDirectories))
                     {
                         //Debug.WriteLine(string.Format("Copying file {0}", Path.Combine(backupDirectoryPath, file_name.Substring(originPath.Length).TrimStart('\\'))));
-                        File.Copy(file_name, Path.Combine(backupDirectoryPath, file_name.Substring(originPath.Length).TrimStart('\\')));
+                        File.Copy(file_name, Path.Combine(backupDirectoryPath, file_name.Substring(originPath.Length).TrimStart('\\')), overwrite: true);
                     }
 
                     //Debug.WriteLine("");

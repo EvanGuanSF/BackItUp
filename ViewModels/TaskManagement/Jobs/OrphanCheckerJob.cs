@@ -42,7 +42,7 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
             }
 
             // Finally, check to make sure BackupItems in the main view are scheduled and running.
-            BackupInfoViewModel.ToggleAllJobs();
+            BackupInfoViewModel.QueueAllJobs();
         }
     }
 }

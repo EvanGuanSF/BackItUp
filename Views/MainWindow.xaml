@@ -296,6 +296,7 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding BackupFrequency, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
                                     <Setter Property="BorderBrush" Value="Red"/>
+                                    <Setter Property="Foreground" Value="Black"/>
                                 </DataTrigger>
                             </Style.Triggers>
 
@@ -374,7 +375,7 @@
                 <DataGridTemplateColumn
                     x:Name="nextBackupDateColumn"
                     Header="Next Backup"
-                    Width="150"
+                    Width="175"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -385,7 +386,8 @@
                                 Margin="5, 0, 5, 0"
                                 Format="Custom"
                                 FormatString="MM-dd-yyyy hh:mm tt"
-                                ToolTip="At what time should this job run?">
+                                UpdateValueOnEnterKey="True"
+                                >
                             </xctk:DateTimePicker>
 
                         </DataTemplate>

@@ -39,7 +39,7 @@ namespace BackItUp.ViewModels
             // Prep the backupinfo for consumption.
             InitBackupInfo();
             // Reactivate any previously active jobs from the serialized data.
-            ToggleAllJobs();
+            QueueAllJobs();
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
             // Prep the commands for use.
@@ -73,7 +73,7 @@ namespace BackItUp.ViewModels
 
             _BackupInfo.Add(testItem);
             _BackupInfo[0].PropertyChanged += ModelPropertyChanged;
-            await TaskManager.QueueBackupJob(testItem);
+            await TaskManager.AddBackupJob(testItem);
 
 
             testItem = new BackupItem()
@@ -87,7 +87,7 @@ namespace BackItUp.ViewModels
 
             _BackupInfo.Add(testItem);
             _BackupInfo[1].PropertyChanged += ModelPropertyChanged;
-            await TaskManager.QueueBackupJob(testItem);
+            await TaskManager.AddBackupJob(testItem);
         }
 
         /// <summary>
@@ -142,11 +142,11 @@ namespace BackItUp.ViewModels
         /// Do not worry about permissions issues.
         /// </summary>
         /// <returns>bool indicating validity of both paths</returns>
-        public bool IsBackupInfoValid()
+        public bool AreBackupPathsValid()
         {
             foreach(BackupItem item in BackupInfo)
             {
-                // Check the origin and then backup paths. If any irregularities are found, then do not allow the user to save/apply the config.
+                // Check the origin and then backup paths.
                 if(!(!string.IsNullOrWhiteSpace(item.OriginPath)
                     && item.OriginPath.IndexOfAny(Path.GetInvalidPathChars()) == -1
                     && Path.IsPathRooted(item.OriginPath)
@@ -196,9 +196,13 @@ namespace BackItUp.ViewModels
             {
                 HandleBackupDateTimeChanged();
             }
-            if(e.PropertyName == "BackupEnabled")
+            if (e.PropertyName == "BackupEnabled")
             {
-                ToggleJobBySelectedIndex();
+                AddJobBySelectedIndex();
+            }
+            if (e.PropertyName == "NextBackupDate")
+            {
+                QueueJob(BackupInfo[SelectedBackupItemIndex]);
             }
         }
 
@@ -231,11 +235,9 @@ namespace BackItUp.ViewModels
                 selectedItem.BackupTime.Minute,
                 0
                 );
-            OnPropertyChanged("BackupInterval");
-            OnPropertyChanged("NextBackupDate");
 
             // Call ToggleJobBySelectedIndex to re-queue the job if the BackEnabled is set to true.
-            ToggleJobBySelectedIndex();
+            QueueJob(selectedItem);
         }
 
         #endregion
@@ -406,6 +408,7 @@ namespace BackItUp.ViewModels
         public static void SaveConfig()
         {
             //Debug.WriteLine("Saving config...");
+            //_ActiveViewModel.HandleBackupDateTimeChanged();
             Serializer.SaveConfigToFile(_ActiveViewModel.BackupInfo);
         }
 
@@ -414,6 +417,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         public void LoadConfig()
         {
+            TaskManager.ClearAllJobs();
             BackupInfo = Serializer.LoadConfigFromFile();
             if (BackupInfo.Count == 0)
                 AddBackupItem();
@@ -425,6 +429,7 @@ namespace BackItUp.ViewModels
         public void ResetConfig()
         {
             BackupInfo = new ObservableCollection<BackupItem>();
+            TaskManager.ClearAllJobs();
             AddBackupItem();
             SaveConfig();
         }
@@ -460,7 +465,7 @@ namespace BackItUp.ViewModels
                     // If it is, we need to queue a new job with the new hash.
                     if(BackupInfo[_SelectedBackupItemIndex].BackupEnabled)
                     {
-                        TaskManager.QueueBackupJob(BackupInfo[_SelectedBackupItemIndex]);
+                        TaskManager.AddBackupJob(BackupInfo[_SelectedBackupItemIndex]);
                     }
                 }
             }
@@ -561,43 +566,70 @@ namespace BackItUp.ViewModels
         /// <summary>
         /// Toggles the job associated to the BackupItem in BackupInfo[SelectedIndex].
         /// </summary>
-        public static void ToggleJobBySelectedIndex()
+        public static void AddJobBySelectedIndex()
         {
-            BackupItem currentItem = _ActiveViewModel.BackupInfo[_SelectedBackupItemIndex];
+            BackupItem itemToQueue = _ActiveViewModel.BackupInfo[_SelectedBackupItemIndex];
 
-            if(currentItem.BackupEnabled)
+            if(itemToQueue.BackupEnabled)
             {
                 // We do not know how long ago the previous job was de-activated.
                 // If the job is enabled and the NextBackupDate has passed, the copy job will run immediately.
                 // To prevent this, recalculate the next backup date of the newly enabled item if its NextBackupDate is before the current date and time.
                 // Keep going until the NextBackupDate is after the current date and time if necessary.
-                while(currentItem.NextBackupDate < DateTime.Now)
+                while(itemToQueue.NextBackupDate < DateTime.Now)
                 {
-                    UpdateNextBackupDate(currentItem.HashCode);
+                    UpdateNextBackupDate(itemToQueue.HashCode);
                 }
-                TaskManager.QueueBackupJob(currentItem);
+
+                TaskManager.AddBackupJob(itemToQueue);
             }
             else
             {
-                TaskManager.RemoveBackupJob(currentItem.HashCode);
+                TaskManager.RemoveBackupJob(itemToQueue.HashCode);
             }
         }
 
         /// <summary>
-        /// Toggles all jobs in the BackupInfo collection.
-        /// Primarily used to reactivate all previous jobs on application start.
+        /// Queues a BackupItem job in the TaskManager.
+        /// If this method is called using a BackupItem that is not enabled, then try to dequeue it.
         /// </summary>
-        public static void ToggleAllJobs()
+        /// <param name="itemToQueue"></param>
+        public static void QueueJob(BackupItem itemToQueue)
         {
-            foreach (BackupItem currentItem in _ActiveViewModel.BackupInfo)
+            if (itemToQueue.BackupEnabled)
             {
-                if (currentItem.BackupEnabled)
+                // We do not know how long ago the previous job was de-activated.
+                // If the job is enabled and the NextBackupDate has passed, the copy job will run immediately.
+                // To prevent this, recalculate the next backup date of the newly enabled item if its NextBackupDate is before the current date and time.
+                // Keep going until the NextBackupDate is after the current date and time if necessary.
+                while (itemToQueue.NextBackupDate < DateTime.Now)
                 {
-                    TaskManager.QueueBackupJob(currentItem);
+                    UpdateNextBackupDate(itemToQueue.HashCode);
+                }
+
+                TaskManager.AddBackupJob(itemToQueue);
+            }
+            else
+            {
+                TaskManager.RemoveBackupJob(itemToQueue.HashCode);
+            }
+        }
+
+        /// <summary>
+        /// Queues all BackupItem jobs in the TaskManager.
+        /// If this method finds a BackupItem that is not enabled, then try to dequeue it.
+        /// </summary>
+        public static void QueueAllJobs()
+        {
+            foreach (BackupItem itemToQueue in _ActiveViewModel.BackupInfo)
+            {
+                if (itemToQueue.BackupEnabled)
+                {
+                    TaskManager.AddBackupJob(itemToQueue);
                 }
                 else
                 {
-                    TaskManager.RemoveBackupJob(currentItem.HashCode);
+                    TaskManager.RemoveBackupJob(itemToQueue.HashCode);
                 }
             }
         }

@@ -10,7 +10,7 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
     {
         public async Task Execute(IJobExecutionContext context)
         {
-            //Debug.WriteLine(string.Format("'{0}' tick: {1}", context.JobDetail.Key.Name.ToString().Substring(0, 5), DateTime.Now));
+            Debug.WriteLine(string.Format("'{0}' tick: {1}", context.JobDetail.Key.Name.ToString().Substring(0, 5), DateTime.Now));
 
             JobDataMap dataMap = context.JobDetail.JobDataMap;
 
@@ -52,7 +52,8 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
                     foreach (string dir in Directory.GetDirectories(originPath, "*", SearchOption.AllDirectories))
                     {
                         //Debug.WriteLine(string.Format("Creating subdir '{0}' from '{1}'", Path.Combine(backupDirectoryPath, dir.Substring(originPath.Length).TrimStart('\\')), dir));
-                        Directory.CreateDirectory(Path.Combine(backupDirectoryPath, dir.Substring(originPath.Length).TrimStart('\\')));
+                        if(!Directory.Exists(Path.Combine(backupDirectoryPath, dir.Substring(originPath.Length).TrimStart('\\'))))
+                            Directory.CreateDirectory(Path.Combine(backupDirectoryPath, dir.Substring(originPath.Length).TrimStart('\\')));
                     }
 
                     // Copy files into the subfolders.

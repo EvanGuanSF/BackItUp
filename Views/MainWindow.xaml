@@ -461,11 +461,13 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
             <!-- Configuration buttons -->
             <Button
-                x:Name="SaveConfigButton"
+                x:Name="saveConfigButton"
                 Command="{Binding SaveConfigCmd}"
                 Grid.Row="1" Grid.Column="1"
                 Margin="0, 5, 5, 0"
@@ -474,16 +476,52 @@
                     Save the current configuration.
                 </Button.ToolTip>
             </Button>
+            
             <Button
-                x:Name="ResetConfigButton"
+                x:Name="resetConfigButton"
                 Command="{Binding ResetConfigCmd}"
-                Grid.Row="1" Grid.Column="3"
+                Grid.Row="1" Grid.Column="5"
                 Margin="5, 5, 0, 0"
                 Content="Reset Settings">
                 <Button.ToolTip>
                     Delete the current configuration.
                 </Button.ToolTip>
             </Button>
+            
+            <!-- Run on Startup checkbox toggle. -->
+            <CheckBox
+                x:Name="runOnStartupCheckBox"
+                Grid.Row="1" Grid.Column="7"
+                IsChecked="{Binding IsRunOnStartupEnabled, Mode=TwoWay}"
+                Command="{Binding ToggleRunOnStartupCmd}"
+                Content="Run on Startup"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Right"
+                FlowDirection="RightToLeft"
+                Margin="5, 0, 5, 0">
+                <CheckBox.Style>
+                    <Style TargetType="CheckBox">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRunOnStartupEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Value="True">
+                                <Setter Property="Background" Value="LightGreen"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsRunOnStartupEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                         Value="False">
+                                <Setter Property="Background" Value="LightPink"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </CheckBox.Style>
+
+                <CheckBox.Resources>
+                    <Style TargetType="{x:Type Path}">
+                        <Setter Property="FlowDirection" Value="LeftToRight" />
+                    </Style>
+                </CheckBox.Resources>
+                
+            </CheckBox>
+
         </Grid>
     </Grid>
 </Window>

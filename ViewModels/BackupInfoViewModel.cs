@@ -6,6 +6,7 @@ using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
@@ -21,6 +22,7 @@ namespace BackItUp.ViewModels
         private static ObservableCollection<BackupPeriodList> _BackupPeriodList;
         private static int _SelectedBackupItemIndex;
         private static BackupInfoViewModel _ActiveViewModel;
+        private static bool _IsRunOnStartupEnabled = bool.Parse(ConfigurationManager.AppSettings["RunOnStartup"]);
 
         #region Member Methods
 
@@ -50,6 +52,7 @@ namespace BackItUp.ViewModels
             SaveConfigCmd = new SaveConfigCommand();
             LoadConfigCmd = new LoadConfigCommand(this);
             ResetConfigCmd = new ResetConfigCommand(this);
+            ToggleRunOnStartupCmd = new ToggleRunOnStartupCommand(this);
 
             // For testing purposes.
             //TestTasks();
@@ -120,6 +123,19 @@ namespace BackItUp.ViewModels
             }
         }
 
+        public bool IsRunOnStartupEnabled
+        {
+            get
+            {
+                return _IsRunOnStartupEnabled;
+            }
+            set
+            {
+                _IsRunOnStartupEnabled = value;
+                OnPropertyChanged("IsRunOnStartupEnabled");
+            }
+        }
+
         /// <summary>
         /// Getter/setter for the currently selected row index of the datagrid.
         /// </summary>
@@ -177,6 +193,7 @@ namespace BackItUp.ViewModels
         public ICommand SaveConfigCmd { get; set; }
         public ICommand LoadConfigCmd { get; set; }
         public ICommand ResetConfigCmd { get; set; }
+        public ICommand ToggleRunOnStartupCmd { get; set; }
 
         #endregion
 

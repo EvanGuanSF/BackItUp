@@ -43,7 +43,7 @@ namespace BackItUp.ViewModels.TaskManagement
                         taskDefinition.Triggers.Add(new LogonTrigger());
 
                         // Create an action that will launch Notepad whenever the trigger fires
-                        taskDefinition.Actions.Add(new ExecAction(System.Reflection.Assembly.GetEntryAssembly().Location));
+                        taskDefinition.Actions.Add(new ExecAction(path: System.Reflection.Assembly.GetEntryAssembly().Location, arguments: "-hidden"));
 
                         // Register the task in the root folder
                         taskService.RootFolder.RegisterTaskDefinition(scheduledTaskName, taskDefinition);
@@ -55,7 +55,7 @@ namespace BackItUp.ViewModels.TaskManagement
                 }
                 catch (Exception e)
                 {
-                    //Debug.WriteLine("ToggleRunOnStartup add: " + e.Message);
+                    Debug.WriteLine("ToggleRunOnStartup add: " + e.Message);
                 }
             }
             else
@@ -79,7 +79,7 @@ namespace BackItUp.ViewModels.TaskManagement
                 }
                 catch (Exception e)
                 {
-                    //Debug.WriteLine("RemoveBackupJob remove: " + e.Message);
+                    Debug.WriteLine("RemoveBackupJob remove: " + e.Message);
                 }
             }
 

@@ -22,10 +22,9 @@ namespace BackItUp.ViewModels.ValueConverters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string)
+            if (value is string @string)
             {
-                int number;
-                if (int.TryParse((string)value, out number))
+                if (int.TryParse(@string, out int number))
                 {
                     return number;
                 }

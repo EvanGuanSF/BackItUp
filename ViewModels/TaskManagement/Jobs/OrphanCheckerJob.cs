@@ -38,7 +38,7 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
             // Now loop through the jobsToRemove list and tell the TaskManager to remove those jobs.
             foreach(string jobHashCode in jobsToRemove)
             {
-                TaskManager.RemoveBackupJob(jobHashCode);
+                TaskManager.DequeueBackupJob(jobHashCode);
             }
 
             // Finally, check to make sure BackupItems in the main view are scheduled and running.

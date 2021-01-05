@@ -10,12 +10,28 @@ namespace BackItUp
     public partial class App : Application
     {
         private TaskbarIcon notifyIcon;
+        private MainWindow mainWindow;
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            bool isStartingHidden = false;
 
             // Initialize main window and view model
-            new MainWindow();
+            mainWindow = new MainWindow();
+
+            // Handle startup arguments.
+            foreach(string arg in e.Args)
+            {
+                if(arg == "-hidden")
+                {
+                    isStartingHidden = true;
+                }
+            }
+
+            // Do not show the main window on launch if option is set.
+            if (!isStartingHidden)
+                mainWindow.Show();
+
             // Initialize the tray icon.
             notifyIcon = (TaskbarIcon)FindResource("NotifyIcon");
             notifyIcon.DataContext = new BackItUp.ViewModels.NotifyIconViewModel();

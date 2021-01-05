@@ -239,7 +239,7 @@ namespace BackItUp.ViewModels
             BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
 
             // Remove any backup jobs associated with the old hash.
-            TaskManager.RemoveBackupJob(selectedItem.HashCode);
+            TaskManager.DequeueBackupJob(selectedItem.HashCode);
 
             // Calculate the number of days to add, then create the new DateTime object.
             int daysToAdd = selectedItem.BackupFrequency * selectedItem.BackupPeriod;
@@ -273,7 +273,7 @@ namespace BackItUp.ViewModels
             BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
 
             // Remove any backup jobs associated with the old hash.
-            TaskManager.RemoveBackupJob(selectedItem.HashCode);
+            TaskManager.DequeueBackupJob(selectedItem.HashCode);
 
             // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
             QueueJobBySelectedIndex();
@@ -335,7 +335,7 @@ namespace BackItUp.ViewModels
                 return;
 
             // Remove any backup jobs associated with the old hash.
-            TaskManager.RemoveBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+            TaskManager.DequeueBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
 
             BackupInfo[SelectedBackupItemIndex].OriginPath = filePath;
 
@@ -353,7 +353,7 @@ namespace BackItUp.ViewModels
                 return;
 
             // Remove any backup jobs associated with the old hash.
-            TaskManager.RemoveBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+            TaskManager.DequeueBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
 
             if (!folderPath.EndsWith("\\"))
                 folderPath += "\\";
@@ -374,7 +374,7 @@ namespace BackItUp.ViewModels
                 return;
 
             // Remove any backup jobs associated with the old hash.
-            TaskManager.RemoveBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+            TaskManager.DequeueBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
 
             if (!folderPath.EndsWith("\\"))
                 folderPath += "\\";
@@ -393,7 +393,7 @@ namespace BackItUp.ViewModels
                 return;
 
             // Remove the selected row.
-            TaskManager.RemoveBackupJob(_BackupInfo[_SelectedBackupItemIndex].HashCode);
+            TaskManager.DequeueBackupJob(_BackupInfo[_SelectedBackupItemIndex].HashCode);
             _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
             SelectedBackupItemIndex = BackupInfo.Count - 1;
         }
@@ -486,7 +486,7 @@ namespace BackItUp.ViewModels
                 //Debug.WriteLine(string.Format("Hashing: '{0}' and '{1}'", BackupInfo[_SelectedBackupItemIndex].OriginPath, BackupInfo[_SelectedBackupItemIndex].BackupPath));
 
                 // Remove the hashcode associated with the current hash before we get rid of it.
-                TaskManager.RemoveBackupJob(BackupInfo[_SelectedBackupItemIndex].HashCode);
+                TaskManager.DequeueBackupJob(BackupInfo[_SelectedBackupItemIndex].HashCode);
 
                 // Then calculate the new hash for the object.
                 BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(
@@ -591,7 +591,7 @@ namespace BackItUp.ViewModels
             // If we did not find the item in the collection, then delete the job.
             if (!itemExists)
             {
-                TaskManager.RemoveBackupJob(hashCode);
+                TaskManager.DequeueBackupJob(hashCode);
                 return true;
             }
 
@@ -619,7 +619,7 @@ namespace BackItUp.ViewModels
             }
             else
             {
-                TaskManager.RemoveBackupJob(currentItem.HashCode);
+                TaskManager.DequeueBackupJob(currentItem.HashCode);
             }
         }
 
@@ -637,7 +637,7 @@ namespace BackItUp.ViewModels
                 }
                 else
                 {
-                    TaskManager.RemoveBackupJob(currentItem.HashCode);
+                    TaskManager.DequeueBackupJob(currentItem.HashCode);
                 }
             }
         }

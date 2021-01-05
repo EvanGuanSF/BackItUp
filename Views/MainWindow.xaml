@@ -291,18 +291,19 @@
                     Width="Auto"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
 
-                    <DataGridTextColumn.CellStyle>
+                    <!--<DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding BackupFrequency, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
                                     <Setter Property="BorderBrush" Value="Red"/>
                                     <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Content" Value="1"/>
                                 </DataTrigger>
                             </Style.Triggers>
 
                             <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
                         </Style>
-                    </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn.CellStyle>-->
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -470,7 +471,7 @@
                 x:Name="SaveConfigButton"
                 Command="{Binding SaveConfigCmd}"
                 Grid.Row="1" Grid.Column="1"
-                Margin="0, 5, 5, 0"
+                Margin="0, 5, 0, 0"
                 Content="Save Settings">
                 <Button.ToolTip>
                     Save the current configuration.
@@ -480,12 +481,45 @@
                 x:Name="ResetConfigButton"
                 Command="{Binding ResetConfigCmd}"
                 Grid.Row="1" Grid.Column="3"
-                Margin="5, 5, 0, 0"
+                Margin="0, 5, 0, 0"
                 Content="Reset Settings">
                 <Button.ToolTip>
                     Delete the current configuration.
                 </Button.ToolTip>
             </Button>
+
+            <CheckBox
+                x:Name="isRunOnStartupEnabledCheckBox"
+                IsChecked="{Binding IsRunOnStartupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                Command="{Binding ToggleRunOnStartupCmd}"
+                Grid.Row="1" Grid.Column="5"
+                Margin="0, 5, 0, 0"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Right"
+                Content="Reset Settings">
+                <!--FlowDirection="RightToLeft"-->
+                <CheckBox.ToolTip>
+                    Enable or disable launching the program on Windows startup.
+                </CheckBox.ToolTip>
+                <CheckBox.Resources>
+                    <Style TargetType="CheckBox">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRunOnStartupEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Value="True">
+                                <Setter Property="Background" Value="LightGreen"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsRunOnStartupEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Value="False">
+                                <Setter Property="Background" Value="LightPink"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                    
+                    <!--<Style TargetType="{x:Type Path}">
+                        <Setter Property="FlowDirection" Value="LeftToRight" />
+                    </Style>-->
+                </CheckBox.Resources>
+            </CheckBox>
         </Grid>
     </Grid>
 </Window>

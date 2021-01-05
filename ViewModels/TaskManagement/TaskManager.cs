@@ -54,14 +54,15 @@ namespace BackItUp.ViewModels.TaskManagement
 
         #region En/Dequeue
 
-        public static async Task AddBackupJob(BackupItem backupItem)
+        public static async Task QueueBackupJob(BackupItem backupItem)
         {
-            //Debug.WriteLine(string.Format("'{0}' Started at: {1}", backupItem.HashCode.Substring(0, 5), DateTime.Now));
+            // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
+            if (string.IsNullOrWhiteSpace(backupItem.HashCode) ||
+                backupItem.HashCode.Length != 64)
+                return;
+
             try
             {
-                // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
-                if (string.IsNullOrWhiteSpace(backupItem.HashCode) || backupItem.HashCode.Length != 64)
-                    return;
 
                 // Grab the Scheduler instance from the Factory
                 IScheduler scheduler = await _SchedulerFactory.GetScheduler();
@@ -99,14 +100,13 @@ namespace BackItUp.ViewModels.TaskManagement
 
                 BackupInfoViewModel.SaveConfig();
                 
-                Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} days(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Days));
-
+                //Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} days(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Days));
 
                 //Debug.WriteLine("Job queued, saving config...");
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                Debug.WriteLine("QueueBackupJob: " + e.Message);
             }
         }
 
@@ -116,6 +116,7 @@ namespace BackItUp.ViewModels.TaskManagement
         /// <param name="backupItemHashCode"></param>
         public static async void RemoveBackupJob(string backupItemHashCode)
         {
+            // First, check the backupItemHashCode to make sure it is something that is usable.
             if (string.IsNullOrWhiteSpace(backupItemHashCode) ||
                 backupItemHashCode.Length != 64)
                 return;
@@ -139,7 +140,7 @@ namespace BackItUp.ViewModels.TaskManagement
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                Debug.WriteLine("RemoveBackupJob: " + e.Message);
             }
         }
 
@@ -154,8 +155,11 @@ namespace BackItUp.ViewModels.TaskManagement
         {
             // Grab the Scheduler instance from the Factory
             IScheduler scheduler = await _SchedulerFactory.GetScheduler();
+
             // Start the scheduler.
             await scheduler.Start();
+
+            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
         }
 
         public static async void ClearAllJobs()
@@ -173,8 +177,11 @@ namespace BackItUp.ViewModels.TaskManagement
         {
             // Grab the Scheduler instance from the Factory
             IScheduler scheduler = await _SchedulerFactory.GetScheduler();
-            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
+
+            // Shut down the scheduler.
             await scheduler.Shutdown();
+
+            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
         }
 
         #endregion

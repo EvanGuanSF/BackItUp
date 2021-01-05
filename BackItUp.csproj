@@ -7,8 +7,11 @@
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <StartupObject>BackItUp.App</StartupObject>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Description>Scheduled File and Folder backup utilizing MVVM architectural pattern in WPF. Uses Quartz.net and Xceed WPF Toolkit for functionality.</Description>
+    <Description>Scheduled File and Folder backup utilizing MVVM architectural pattern in WPF. Uses Quartz.net, Xceed WPF Toolkit, and Task Scheduler Managed Wrapper for functionality.</Description>
     <Authors>Evan Guan</Authors>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <PackageReleaseNotes>Added "Run on Startup" functionality</PackageReleaseNotes>
+    <FileVersion>1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

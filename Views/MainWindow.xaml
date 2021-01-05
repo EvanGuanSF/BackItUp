@@ -501,7 +501,7 @@
                 Margin="0, 5, 0, 0"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Right"
-                Content="Reset Settings">
+                Content="Run on Startup">
                 <!--FlowDirection="RightToLeft"-->
                 <CheckBox.ToolTip>
                     Enable or disable launching the program on Windows startup.

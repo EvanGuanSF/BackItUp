@@ -17,6 +17,7 @@
     <Window.Resources>
         <!-- Value Converters -->
         <vc:IgnoreNewItemPlaceHolderConverter x:Key="ignoreNewItemPlaceHolderConverter"/>
+        <vc:IntConverter x:Key="intConverter"/>
 
         <!-- DataGrid style -->
         <Style TargetType="{x:Type DataGrid}">
@@ -287,7 +288,10 @@
                 <DataGridTextColumn
                     x:Name="backupFrequencyMultColumn"
                     Header="Frequency"
-                    Binding="{Binding BackupFrequency, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Binding="{Binding BackupFrequency,
+                        Mode=TwoWay,
+                        UpdateSourceTrigger=PropertyChanged,
+                        Converter={StaticResource intConverter}}"
                     Width="Auto"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
 

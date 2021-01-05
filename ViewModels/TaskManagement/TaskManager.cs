@@ -159,7 +159,7 @@ namespace BackItUp.ViewModels.TaskManagement
             // Start the scheduler.
             await scheduler.Start();
 
-            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
+            Debug.WriteLine(string.Format("TaskManager starting up at: {0}", DateTime.Now));
         }
 
         public static async void ClearAllJobs()

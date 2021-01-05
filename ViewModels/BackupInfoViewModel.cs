@@ -629,16 +629,23 @@ namespace BackItUp.ViewModels
         /// </summary>
         public static void QueueAllJobs()
         {
-            foreach (BackupItem currentItem in _ActiveViewModel.BackupInfo)
+            try
             {
-                if (currentItem.BackupEnabled)
+                foreach (BackupItem currentItem in _ActiveViewModel.BackupInfo)
                 {
-                    TaskManager.QueueBackupJob(currentItem);
+                    if (currentItem.BackupEnabled)
+                    {
+                        TaskManager.QueueBackupJob(currentItem);
+                    }
+                    else
+                    {
+                        TaskManager.DequeueBackupJob(currentItem.HashCode);
+                    }
                 }
-                else
-                {
-                    TaskManager.DequeueBackupJob(currentItem.HashCode);
-                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("QueueAllJobs: " + e.Message);
             }
         }
 

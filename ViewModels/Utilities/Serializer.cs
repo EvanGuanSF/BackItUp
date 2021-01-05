@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -24,16 +25,23 @@ namespace BackItUp.ViewModels.Serialization
         /// <param name="backupCollection"></param>
         public static void SaveConfigToFile(ObservableCollection<BackupItem> backupCollection)
         {
-            IsSerializerIdle = false;
-
-            if (!IsSerializerIdle)
+            try
             {
-                stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Create);
-                binaryFormatter = new BinaryFormatter();
-                binaryFormatter.Serialize(stream, backupCollection.ToList());
-                stream.Close();
+                IsSerializerIdle = false;
 
-                IsSerializerIdle = true;
+                if (!IsSerializerIdle)
+                {
+                    stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Create);
+                    binaryFormatter = new BinaryFormatter();
+                    binaryFormatter.Serialize(stream, backupCollection.ToList());
+                    stream.Close();
+
+                    IsSerializerIdle = true;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("SaveConfigToFile: " + e.Message);
             }
         }
 
@@ -42,35 +50,44 @@ namespace BackItUp.ViewModels.Serialization
         /// </summary>
         public static ObservableCollection<BackupItem> LoadConfigFromFile()
         {
-            IsSerializerIdle = false;
-            // If we have a config file, then load and return it. Otherwise, return an empty collection.
-            if (!IsSerializerIdle && File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
+            try
             {
-                stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Open);
-                try
+                IsSerializerIdle = false;
+                // If we have a config file, then load and return it. Otherwise, return an empty collection.
+                if (!IsSerializerIdle && File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
                 {
-                    // Create a new collection.
-                    ObservableCollection<BackupItem> backupCollection;
+                    stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Open);
+                    try
+                    {
+                        // Create a new collection.
+                        ObservableCollection<BackupItem> backupCollection;
 
-                    // Open the file, deserialize contents, close the stream, and return the new collection.
-                    binaryFormatter = new BinaryFormatter();
-                    List<BackupItem> streamData = (List<BackupItem>)binaryFormatter.Deserialize(stream);
-                    backupCollection = new ObservableCollection<BackupItem>(streamData);
-                    stream.Close();
+                        // Open the file, deserialize contents, close the stream, and return the new collection.
+                        binaryFormatter = new BinaryFormatter();
+                        List<BackupItem> streamData = (List<BackupItem>)binaryFormatter.Deserialize(stream);
+                        backupCollection = new ObservableCollection<BackupItem>(streamData);
+                        stream.Close();
 
-                    IsSerializerIdle = true;
-                    return backupCollection;
+                        IsSerializerIdle = true;
+                        return backupCollection;
+                    }
+                    catch
+                    {
+                        // If there was an error in the backup data, just load a new BackupInfo collection instead.
+                        stream.Close();
+                        IsSerializerIdle = true;
+                        return new ObservableCollection<BackupItem>();
+                    }
                 }
-                catch
+                else
                 {
-                    // If there was an error in the backup data, just load a new BackupInfo collection instead.
-                    stream.Close();
                     IsSerializerIdle = true;
                     return new ObservableCollection<BackupItem>();
                 }
             }
-            else
+            catch (Exception e)
             {
+                Debug.WriteLine("SaveConfigToFile: " + e.Message);
                 IsSerializerIdle = true;
                 return new ObservableCollection<BackupItem>();
             }

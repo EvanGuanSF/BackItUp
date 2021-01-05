@@ -6,7 +6,7 @@ namespace BackItUp.ViewModels.Commands
 {
     internal class ResetConfigCommand : ICommand
     {
-        private BackupInfoViewModel _ViewModel;
+        private readonly BackupInfoViewModel _ViewModel;
 
         /// <summary>
         /// Initialize a new instance of the ResetConfigCommand class.

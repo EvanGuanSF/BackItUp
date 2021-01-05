@@ -5,7 +5,7 @@ namespace BackItUp.ViewModels.Commands
 {
     internal class SelectBackupFolderDialogCommand : ICommand
     {
-        private BackupInfoViewModel _ViewModel;
+        private readonly BackupInfoViewModel _ViewModel;
 
         /// <summary>
         /// Initialize a new instance of the SelectBackupFolderDialogCommand class.

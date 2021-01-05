@@ -28,7 +28,7 @@ namespace BackItUp.ViewModels.Serialization
 
             if (!IsSerializerIdle)
             {
-                stream = File.Open(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Create);
+                stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Create);
                 binaryFormatter = new BinaryFormatter();
                 binaryFormatter.Serialize(stream, backupCollection.ToList());
                 stream.Close();
@@ -44,9 +44,9 @@ namespace BackItUp.ViewModels.Serialization
         {
             IsSerializerIdle = false;
             // If we have a config file, then load and return it. Otherwise, return an empty collection.
-            if (!IsSerializerIdle && File.Exists(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
+            if (!IsSerializerIdle && File.Exists(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat"))
             {
-                stream = File.Open(System.AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Open);
+                stream = File.Open(AppDomain.CurrentDomain.BaseDirectory + @"BackItUpBackupConfig.dat", FileMode.Open);
                 try
                 {
                     // Create a new collection.

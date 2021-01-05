@@ -37,12 +37,18 @@ namespace BackItUp.ViewModels
             // For testing purposes.
             //_BackupInfo = new ObservableCollection<BackupItem>();
 
+            // Actiovate the 
+            TaskManager.InitScheduler();
+
             // Prep the backupinfo for consumption.
             InitBackupInfo();
-            // Reactivate any previously active jobs from the serialized data.
-            ToggleAllJobs();
             // Prep the list of backup periods for consumption.
             InitBackupPeriodList();
+            // Reactivate any previously active jobs from the serialized data.
+            QueueAllJobs();
+            // Check and toggle startup settings.
+            ProgramOptionsManager.ToggleRunOnStartup(IsRunOnStartupEnabled);
+
             // Prep the commands for use.
             DeleteItemCmd = new DeleteBackupItemCommand(this);
             AddItemCmd = new AddBackupItemCommand(this);
@@ -213,18 +219,22 @@ namespace BackItUp.ViewModels
                 e.PropertyName == "BackupPeriod" ||
                 e.PropertyName == "BackupTime")
             {
-                HandleBackupDateTimeChanged();
+                HandleIntervalChanged();
             }
             if(e.PropertyName == "BackupEnabled")
             {
-                ToggleJobBySelectedIndex();
+                QueueJobBySelectedIndex();
+            }
+            if (e.PropertyName == "NextBackupDate")
+            {
+                HandleNextBackupDateChanged();
             }
         }
 
         /// <summary>
         /// Update the NextBackupDate of the current item if a new frequency, period, or time of day is specified.
         /// </summary>
-        private void HandleBackupDateTimeChanged()
+        private void HandleIntervalChanged()
         {
             BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
 
@@ -250,11 +260,23 @@ namespace BackItUp.ViewModels
                 selectedItem.BackupTime.Minute,
                 0
                 );
-            OnPropertyChanged("BackupInterval");
-            OnPropertyChanged("NextBackupDate");
 
             // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
-            ToggleJobBySelectedIndex();
+            QueueJobBySelectedIndex();
+        }
+
+        /// <summary>
+        /// If the NextBackupDate itself is changed directly, then just reschedule the backup job.
+        /// </summary>
+        private void HandleNextBackupDateChanged()
+        {
+            BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
+
+            // Remove any backup jobs associated with the old hash.
+            TaskManager.RemoveBackupJob(selectedItem.HashCode);
+
+            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
+            QueueJobBySelectedIndex();
         }
 
         #endregion
@@ -271,7 +293,6 @@ namespace BackItUp.ViewModels
             {
                 item.PropertyChanged += ModelPropertyChanged;
             }
-            OnPropertyChanged("BackupList");
         }
 
         /// <summary>
@@ -580,7 +601,7 @@ namespace BackItUp.ViewModels
         /// <summary>
         /// Toggles the job associated to the BackupItem in BackupInfo[SelectedIndex].
         /// </summary>
-        public static void ToggleJobBySelectedIndex()
+        public static void QueueJobBySelectedIndex()
         {
             BackupItem currentItem = _ActiveViewModel.BackupInfo[_SelectedBackupItemIndex];
 
@@ -606,7 +627,7 @@ namespace BackItUp.ViewModels
         /// Toggles all jobs in the BackupInfo collection.
         /// Primarily used to reactivate all previous jobs on application start.
         /// </summary>
-        public static void ToggleAllJobs()
+        public static void QueueAllJobs()
         {
             foreach (BackupItem currentItem in _ActiveViewModel.BackupInfo)
             {
@@ -651,7 +672,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         /// <param name="hashCode"></param>
         /// <param name="isActive"></param>
-        public static void SetBackupItemActivity(string hashCode, bool isActive)
+        public static void SetBackupItemActive(string hashCode, bool isActive)
         {
             foreach (BackupItem item in _ActiveViewModel.BackupInfo)
             {

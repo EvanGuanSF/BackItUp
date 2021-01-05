@@ -56,13 +56,13 @@ namespace BackItUp.ViewModels.TaskManagement
 
         public static async Task QueueBackupJob(BackupItem backupItem)
         {
-            //Debug.WriteLine(string.Format("'{0}' Started at: {1}", backupItem.HashCode.Substring(0, 5), DateTime.Now));
-            //Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} second(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Seconds));
+            // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
+            if (string.IsNullOrWhiteSpace(backupItem.HashCode) ||
+                backupItem.HashCode.Length != 64)
+                return;
+
             try
             {
-                // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
-                if (string.IsNullOrWhiteSpace(backupItem.HashCode) || backupItem.HashCode.Length != 64)
-                    return;
 
                 // Grab the Scheduler instance from the Factory
                 IScheduler scheduler = await _SchedulerFactory.GetScheduler();
@@ -75,33 +75,38 @@ namespace BackItUp.ViewModels.TaskManagement
                     await scheduler.DeleteJob(jobID);
                 }
 
-                // define the job and tie it to our CopyJob class
+                // Define the CopyJob.
                 IJobDetail job = JobBuilder.Create<BackupJob>()
                     .WithIdentity(jobID)
                     .UsingJobData("originPath", backupItem.OriginPath)
                     .UsingJobData("backupPath", backupItem.BackupPath)
                     .Build();
 
-                // Trigger the job to run now, and then repeat every 10 seconds
+                // Setup the job trigger.
                 ITrigger trigger = TriggerBuilder.Create()
                     .WithIdentity(backupItem.HashCode, "ActiveBackups")
                     .StartAt(backupItem.NextBackupDate)
                     .WithSimpleSchedule(x => x
                         .WithIntervalInHours(backupItem.BackupInterval.Days * 24)
-                        .RepeatForever())
+                        .RepeatForever()
+                        .WithMisfireHandlingInstructionFireNow())
                     .Build();
 
-                // Tell quartz to schedule the job using our trigger
+                // Tell quartz to schedule the job using our trigger.
                 await scheduler.ScheduleJob(job, trigger);
 
                 // Update the BackupItem to indicate that its BackupJob has been successfully queued.
-                BackupInfoViewModel.SetBackupItemActivity(backupItem.HashCode, true);
+                BackupInfoViewModel.SetBackupItemActive(backupItem.HashCode, true);
 
                 BackupInfoViewModel.SaveConfig();
+                
+                //Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} days(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Days));
+
+                //Debug.WriteLine("Job queued, saving config...");
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                Debug.WriteLine("QueueBackupJob: " + e.Message);
             }
         }
 
@@ -111,7 +116,12 @@ namespace BackItUp.ViewModels.TaskManagement
         /// <param name="backupItemHashCode"></param>
         public static async void RemoveBackupJob(string backupItemHashCode)
         {
-            //Debug.WriteLine(string.Format("'{0}' removed at: {1}", backupItemHashCode.Substring(0, 5), DateTime.Now));
+            // First, check the backupItemHashCode to make sure it is something that is usable.
+            if (string.IsNullOrWhiteSpace(backupItemHashCode) ||
+                backupItemHashCode.Length != 64)
+                return;
+
+            Debug.WriteLine(string.Format("'{0}' removed at: {1}", backupItemHashCode.Substring(0, 5), DateTime.Now));
             // Grab the Scheduler instance from the Factory
             try
             {
@@ -122,20 +132,21 @@ namespace BackItUp.ViewModels.TaskManagement
                 if (await scheduler.CheckExists(jobToCheck))
                 {
                     await scheduler.DeleteJob(jobToCheck);
-                    BackupInfoViewModel.SetBackupItemActivity(backupItemHashCode, false);
+                    BackupInfoViewModel.SetBackupItemActive(backupItemHashCode, false);
                 }
 
                 BackupInfoViewModel.SaveConfig();
+                //Debug.WriteLine("Job de-queued, saving config...");
             }
             catch (Exception e)
             {
-                Debug.WriteLine(e.Message);
+                Debug.WriteLine("RemoveBackupJob: " + e.Message);
             }
         }
 
         #endregion
 
-        #region Init and shutdown
+        #region Init, clear, and shutdown
 
         /// <summary>
         /// Initialize the scheduler for use.
@@ -144,8 +155,19 @@ namespace BackItUp.ViewModels.TaskManagement
         {
             // Grab the Scheduler instance from the Factory
             IScheduler scheduler = await _SchedulerFactory.GetScheduler();
+
             // Start the scheduler.
             await scheduler.Start();
+
+            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
+        }
+
+        public static async void ClearAllJobs()
+        {
+            // Grab the Scheduler instance from the Factory
+            IScheduler scheduler = await _SchedulerFactory.GetScheduler();
+
+            await scheduler.Clear();
         }
 
         /// <summary>
@@ -155,8 +177,11 @@ namespace BackItUp.ViewModels.TaskManagement
         {
             // Grab the Scheduler instance from the Factory
             IScheduler scheduler = await _SchedulerFactory.GetScheduler();
-            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
+
+            // Shut down the scheduler.
             await scheduler.Shutdown();
+
+            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
         }
 
         #endregion

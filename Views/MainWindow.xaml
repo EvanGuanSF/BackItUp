@@ -291,17 +291,19 @@
                     Width="Auto"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
 
-                    <DataGridTextColumn.CellStyle>
+                    <!--<DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding BackupFrequency, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
                                     <Setter Property="BorderBrush" Value="Red"/>
+                                    <Setter Property="Foreground" Value="Black"/>
+                                    <Setter Property="Content" Value="1"/>
                                 </DataTrigger>
                             </Style.Triggers>
 
                             <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
                         </Style>
-                    </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn.CellStyle>-->
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -374,7 +376,7 @@
                 <DataGridTemplateColumn
                     x:Name="nextBackupDateColumn"
                     Header="Next Backup"
-                    Width="150"
+                    Width="175"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -385,7 +387,8 @@
                                 Margin="5, 0, 5, 0"
                                 Format="Custom"
                                 FormatString="MM-dd-yyyy hh:mm tt"
-                                ToolTip="At what time should this job run?">
+                                UpdateValueOnEnterKey="True"
+                                >
                             </xctk:DateTimePicker>
 
                         </DataTemplate>
@@ -470,7 +473,7 @@
                 x:Name="saveConfigButton"
                 Command="{Binding SaveConfigCmd}"
                 Grid.Row="1" Grid.Column="1"
-                Margin="0, 5, 5, 0"
+                Margin="0, 5, 0, 0"
                 Content="Save Settings">
                 <Button.ToolTip>
                     Save the current configuration.
@@ -480,48 +483,46 @@
             <Button
                 x:Name="resetConfigButton"
                 Command="{Binding ResetConfigCmd}"
-                Grid.Row="1" Grid.Column="5"
-                Margin="5, 5, 0, 0"
+                Grid.Row="1" Grid.Column="3"
+                Margin="0, 5, 0, 0"
                 Content="Reset Settings">
                 <Button.ToolTip>
                     Delete the current configuration.
                 </Button.ToolTip>
             </Button>
-            
-            <!-- Run on Startup checkbox toggle. -->
+
             <CheckBox
-                x:Name="runOnStartupCheckBox"
-                Grid.Row="1" Grid.Column="7"
-                IsChecked="{Binding IsRunOnStartupEnabled, Mode=TwoWay}"
+                x:Name="isRunOnStartupEnabledCheckBox"
+                IsChecked="{Binding IsRunOnStartupEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 Command="{Binding ToggleRunOnStartupCmd}"
-                Content="Run on Startup"
+                Grid.Row="1" Grid.Column="5"
+                Margin="0, 5, 0, 0"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Right"
-                FlowDirection="RightToLeft"
-                Margin="5, 0, 5, 0">
-                <CheckBox.Style>
+                Content="Reset Settings">
+                <!--FlowDirection="RightToLeft"-->
+                <CheckBox.ToolTip>
+                    Enable or disable launching the program on Windows startup.
+                </CheckBox.ToolTip>
+                <CheckBox.Resources>
                     <Style TargetType="CheckBox">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsRunOnStartupEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                         Value="True">
+                                     Value="True">
                                 <Setter Property="Background" Value="LightGreen"/>
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsRunOnStartupEnabled, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
-                                         Value="False">
+                                     Value="False">
                                 <Setter Property="Background" Value="LightPink"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </CheckBox.Style>
-
-                <CheckBox.Resources>
-                    <Style TargetType="{x:Type Path}">
+                    
+                    <!--<Style TargetType="{x:Type Path}">
                         <Setter Property="FlowDirection" Value="LeftToRight" />
-                    </Style>
+                    </Style>-->
                 </CheckBox.Resources>
-                
             </CheckBox>
-
         </Grid>
     </Grid>
 </Window>

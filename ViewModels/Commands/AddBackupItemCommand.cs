@@ -5,7 +5,7 @@ namespace BackItUp.ViewModels.Commands
 {
     internal class AddBackupItemCommand : ICommand
     {
-        private BackupInfoViewModel _ViewModel;
+        private readonly BackupInfoViewModel _ViewModel;
 
         /// <summary>
         /// Initialize a new instance of the AddBackupItemCommand class.

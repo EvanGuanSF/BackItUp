@@ -14,7 +14,6 @@ namespace BackItUp.Views
             InitializeComponent();
             var viewModel = new BackupInfoViewModel();
             this.DataContext = viewModel;
-            this.Show();
         }
 
         protected override void OnClosing(CancelEventArgs e)

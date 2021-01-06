@@ -56,13 +56,13 @@ namespace BackItUp.ViewModels.TaskManagement
 
         public static async Task QueueBackupJob(BackupItem backupItem)
         {
-            // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
-            if (string.IsNullOrWhiteSpace(backupItem.HashCode) ||
-                backupItem.HashCode.Length != 64)
-                return;
-
             try
             {
+                //Debug.WriteLine(backupItem.HashCode);
+                // First, check the HashCode of the BackupItem to make sure we have the info to make a job.
+                if (string.IsNullOrWhiteSpace(backupItem.HashCode) ||
+                    backupItem.HashCode.Length != 64)
+                    return;
 
                 // Grab the Scheduler instance from the Factory
                 IScheduler scheduler = await _SchedulerFactory.GetScheduler();
@@ -100,7 +100,7 @@ namespace BackItUp.ViewModels.TaskManagement
 
                 BackupInfoViewModel.SaveConfig();
                 
-                //Debug.WriteLine(string.Format("'{0}' should run at: {1} and tick every {2} days(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Days));
+                Debug.WriteLine(string.Format("'{0}' running at: {1} and ticking every {2} days(s)", backupItem.HashCode.Substring(0, 5), backupItem.NextBackupDate, backupItem.BackupInterval.Days));
 
                 //Debug.WriteLine("Job queued, saving config...");
             }
@@ -114,7 +114,7 @@ namespace BackItUp.ViewModels.TaskManagement
         /// Remove a backup job from the jobs pool with given BackupItem HashCode.
         /// </summary>
         /// <param name="backupItemHashCode"></param>
-        public static async void RemoveBackupJob(string backupItemHashCode)
+        public static async void DequeueBackupJob(string backupItemHashCode)
         {
             // First, check the backupItemHashCode to make sure it is something that is usable.
             if (string.IsNullOrWhiteSpace(backupItemHashCode) ||
@@ -159,7 +159,7 @@ namespace BackItUp.ViewModels.TaskManagement
             // Start the scheduler.
             await scheduler.Start();
 
-            Debug.WriteLine(string.Format("TaskManager shutting down at: {0}", DateTime.Now));
+            Debug.WriteLine(string.Format("TaskManager starting up at: {0}", DateTime.Now));
         }
 
         public static async void ClearAllJobs()

@@ -127,6 +127,10 @@ namespace BackItUp.ViewModels
             {
                 return _BackupPeriodList;
             }
+            private set
+            {
+                _BackupPeriodList = value;
+            }
         }
 
         public bool IsRunOnStartupEnabled
@@ -264,7 +268,7 @@ namespace BackItUp.ViewModels
                 0
                 );
 
-            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
+            // Re-enable the job if the BackEnabled is set to true.
             QueueJobByBackupItem(itemToUpdate);
         }
 
@@ -276,7 +280,7 @@ namespace BackItUp.ViewModels
             // Remove any backup jobs associated with the old hash.
             TaskManager.DequeueBackupJob(itemToUpdate);
 
-            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
+            // Re-enable the job if the BackEnabled is set to true.
             QueueJobByBackupItem(itemToUpdate);
         }
 
@@ -301,7 +305,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         private void InitBackupPeriodList()
         {
-            _BackupPeriodList = new ObservableCollection<BackupPeriodList>
+            BackupPeriodList = new ObservableCollection<BackupPeriodList>
             {
                 new BackupPeriodList(1, "Day(s)"),
                 new BackupPeriodList(7, "Week(s)"),
@@ -320,7 +324,7 @@ namespace BackItUp.ViewModels
         {
             get
             {
-                return _SelectedBackupItemIndex < _BackupInfo.Count;
+                return SelectedBackupItemIndex < BackupInfo.Count;
             }
         }
 
@@ -383,12 +387,12 @@ namespace BackItUp.ViewModels
         /// </summary>
         public void DeleteBackupItemBySelectedIndex()
         {
-            if (_SelectedBackupItemIndex == -1)
+            if (SelectedBackupItemIndex == -1)
                 return;
 
             // Remove the selected row.
-            TaskManager.DequeueBackupJob(_BackupInfo[_SelectedBackupItemIndex].HashCode);
-            _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
+            TaskManager.DequeueBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+            BackupInfo.RemoveAt(SelectedBackupItemIndex);
             SelectedBackupItemIndex = BackupInfo.Count - 1;
         }
 
@@ -420,7 +424,7 @@ namespace BackItUp.ViewModels
             {
                 Debug.WriteLine("Removing item from list.");
                 _ActiveViewModel.BackupInfo.Remove(itemToRemove);
-                _ActiveViewModel.SelectedBackupItemIndex = _BackupInfo.Count - 1;
+                _ActiveViewModel.SelectedBackupItemIndex = _ActiveViewModel.BackupInfo.Count - 1;
             }
         }
 
@@ -519,7 +523,7 @@ namespace BackItUp.ViewModels
             {
                 if(newHashCode == BackupInfo[i].HashCode)
                 {
-                    BackupInfo[_SelectedBackupItemIndex].LoadDefaultValues();
+                    BackupInfo[SelectedBackupItemIndex].LoadDefaultValues();
                     return true;
                 }
             }
@@ -534,7 +538,7 @@ namespace BackItUp.ViewModels
         {
             BackupItem itemToUpdate = null;
 
-            foreach(BackupItem backupItem in _BackupInfo)
+            foreach(BackupItem backupItem in _ActiveViewModel.BackupInfo)
             {
                 if(backupItem.HashCode == hashCode)
                 {
@@ -595,7 +599,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         public static void QueueJobBySelectedIndex()
         {
-            BackupItem currentItem = _ActiveViewModel.BackupInfo[_SelectedBackupItemIndex];
+            BackupItem currentItem = _ActiveViewModel.BackupInfo[_ActiveViewModel.SelectedBackupItemIndex];
 
             if(currentItem.BackupEnabled)
             {

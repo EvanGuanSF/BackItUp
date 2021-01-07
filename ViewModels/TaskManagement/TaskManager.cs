@@ -114,7 +114,7 @@ namespace BackItUp.ViewModels.TaskManagement
         /// Remove a backup job from the jobs pool with given BackupItem HashCode.
         /// </summary>
         /// <param name="backupItemHashCode"></param>
-        public static async void DequeueBackupJob(string backupItemHashCode)
+        public static async Task DequeueBackupJob(string backupItemHashCode)
         {
             // First, check the backupItemHashCode to make sure it is something that is usable.
             if (string.IsNullOrWhiteSpace(backupItemHashCode) ||
@@ -142,6 +142,15 @@ namespace BackItUp.ViewModels.TaskManagement
             {
                 Debug.WriteLine("RemoveBackupJob: " + e.Message);
             }
+        }
+
+        /// <summary>
+        /// Remove a backup job from the jobs pool with given BackupItem.
+        /// </summary>
+        /// <param name="backupItemHashCode"></param>
+        public static async void DequeueBackupJob(BackupItem backupItem)
+        {
+            await DequeueBackupJob(backupItem.HashCode);
         }
 
         #endregion

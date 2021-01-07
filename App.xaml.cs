@@ -15,7 +15,7 @@ namespace BackItUp
         private TaskbarIcon notifyIcon;
         private MainWindow mainWindow;
         // Mutex for single-instance program operation.
-        static Mutex mutex = new Mutex(true, "BackItUpInstance");
+        static readonly Mutex mutex = new Mutex(true, "BackItUpInstance");
 
         protected override void OnStartup(StartupEventArgs e)
         {

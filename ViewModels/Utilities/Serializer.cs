@@ -87,7 +87,7 @@ namespace BackItUp.ViewModels.Serialization
             }
             catch (Exception e)
             {
-                Debug.WriteLine("SaveConfigToFile: " + e.Message);
+                Debug.WriteLine("LoadConfigFromFile: " + e.Message);
                 IsSerializerIdle = true;
                 return new ObservableCollection<BackupItem>();
             }

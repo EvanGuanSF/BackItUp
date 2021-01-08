@@ -336,8 +336,8 @@
 
                             <ComboBox
                                 SelectedValue="{Binding BackupPeriod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                SelectedValuePath="PeriodKey"
-                                DisplayMemberPath="PeriodValue"
+                                SelectedValuePath="Key"
+                                DisplayMemberPath="Value"
                                 SelectedIndex="0"
                                 IsEditable="False">
                                 <ComboBox.Resources>
@@ -426,25 +426,31 @@
                                 </CheckBox>
 
                                 <Border.ToolTip>
-                                    <TextBlock>
-                                        Green: Task is scheduled.
-                                        <LineBreak/>
-                                        Red: Task is unscheduled.
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding StatusMessage}"/>
                                 </Border.ToolTip>
 
                             </Border>
 
                             <DataTemplate.Triggers>
                                 <DataTrigger
-                                    Binding="{Binding BackupActive, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="True">
+                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="0">
+                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightPink"/>
+                                </DataTrigger>
+                                <DataTrigger
+                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="1">
                                     <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightGreen"/>
                                 </DataTrigger>
                                 <DataTrigger
-                                    Binding="{Binding BackupActive, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="False">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightPink"/>
+                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="2">
+                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightBlue"/>
+                                </DataTrigger>
+                                <DataTrigger
+                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="3">
+                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="Orange"/>
                                 </DataTrigger>
                             </DataTemplate.Triggers>
 

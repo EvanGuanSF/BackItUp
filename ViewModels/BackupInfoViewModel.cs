@@ -19,7 +19,7 @@ namespace BackItUp.ViewModels
     internal class BackupInfoViewModel : INotifyPropertyChanged
     {
         private static ObservableCollection<BackupItem> _BackupInfo;
-        private static ObservableCollection<BackupPeriodList> _BackupPeriodList;
+        private static ObservableCollection<KeyValuePair<int, string>> _BackupPeriodList;
         private static int _SelectedBackupItemIndex;
         private static BackupInfoViewModel _ActiveViewModel;
         private static bool _IsRunOnStartupEnabled = bool.Parse(ConfigurationManager.AppSettings["RunOnStartup"]);
@@ -121,7 +121,7 @@ namespace BackItUp.ViewModels
         /// <summary>
         /// Gets the backup period list.
         /// </summary>
-        public ObservableCollection<BackupPeriodList> BackupPeriodList
+        public ObservableCollection<KeyValuePair<int, string>> BackupPeriodList
         {
             get
             {
@@ -305,12 +305,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         private void InitBackupPeriodList()
         {
-            BackupPeriodList = new ObservableCollection<BackupPeriodList>
-            {
-                new BackupPeriodList(1, "Day(s)"),
-                new BackupPeriodList(7, "Week(s)"),
-                new BackupPeriodList(30, "Month(s)")
-            };
+            BackupPeriodList = new ObservableCollection<KeyValuePair<int, string>>(BackupPeriodPairs.GetBackupPeriodPairs());
         }
 
         #endregion
@@ -731,8 +726,8 @@ namespace BackItUp.ViewModels
         /// Sets a property on a BackupItem indicating whether or not it has a running job associated with it.
         /// </summary>
         /// <param name="hashCode"></param>
-        /// <param name="isActive"></param>
-        public static void SetBackupItemActive(string hashCode, bool isActive)
+        /// <param name="statusCode"></param>
+        public static void SetBackupItemStatus(string hashCode, int statusCode)
         {
             foreach (BackupItem item in _ActiveViewModel.BackupInfo)
             {
@@ -741,7 +736,7 @@ namespace BackItUp.ViewModels
                     item.HashCode == hashCode)
                 {
                     //Debug.WriteLine(string.Format("{0} is now {1}", hashCode, isActive == true ? "active" : "inactive"));
-                    item.BackupActive = isActive;
+                    item.StatusCode = statusCode;
                     break;
                 }
             }

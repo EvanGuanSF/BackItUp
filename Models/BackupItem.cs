@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using static BackItUp.Models.Validation.BackupItemValidation;
+using static BackItUp.Models.BackupItemStatusCodePairs;
 
 namespace BackItUp.Models
 {
@@ -166,17 +167,33 @@ namespace BackItUp.Models
         }
 
         [field: NonSerialized]
-        private bool _BackupActive;
-        public bool BackupActive
+        private int _StatusCode;
+        public int StatusCode
         {
             get
             {
-                return _BackupActive;
+                return _StatusCode;
             }
             set
             {
-                _BackupActive = value;
-                OnPropertyChanged("BackupActive", value.ToString());
+                _StatusCode = value;
+                StatusMessage = GetBackupItemStatusCodePairs()[value].Value;
+                OnPropertyChanged("StatusCode", value.ToString());
+            }
+        }
+
+        [field: NonSerialized]
+        private string _StatusMessage;
+        public string StatusMessage
+        {
+            get
+            {
+                return _StatusMessage;
+            }
+            set
+            {
+                _StatusMessage = value;
+                OnPropertyChanged("StatusMessage", value.ToString());
             }
         }
 
@@ -205,7 +222,7 @@ namespace BackItUp.Models
             BackupTime = DateTime.Now;
             NextBackupDate = DateTime.Now.AddDays(1);
             BackupEnabled = true;
-            BackupActive = false;
+            StatusCode = (int)StatusCodes.UNQUEUED;
         }
 
         public override string ToString()
@@ -222,7 +239,7 @@ namespace BackItUp.Models
                 BackupTime,
                 NextBackupDate,
                 BackupEnabled,
-                BackupActive
+                StatusCode
                 );
         }
 
@@ -301,11 +318,11 @@ namespace BackItUp.Models
             BackupInterval = (TimeSpan)info.GetValue("BackupInterval", typeof(TimeSpan));
             NextBackupDate = (DateTime)info.GetValue("NextBackupDate", typeof(DateTime));
             BackupEnabled = (bool)info.GetValue("BackupEnabled", typeof(bool));
-            BackupActive = false;
+            StatusCode = (int)StatusCodes.UNQUEUED;
 
-            Debug.WriteLine("");
-            Debug.WriteLine(ToString());
-            Debug.WriteLine("");
+            //Debug.WriteLine("");
+            //Debug.WriteLine(ToString());
+            //Debug.WriteLine("");
         }
 
         #endregion

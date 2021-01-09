@@ -256,13 +256,15 @@
                                 <TextBlock 
                                     Grid.Column="0"
                                     x:Name="dateLastBackedUpText"
-                                    Text="{Binding LastBackupDate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Text="{Binding LastBackupDate, Mode=OneWay,
+                                    UpdateSourceTrigger=PropertyChanged,
+                                    StringFormat=MM-dd-yyyy hh:mm tt}"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Center"
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 5, 0"
                                     Width="Auto">
-                                    
+
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Style.Triggers>
@@ -278,7 +280,7 @@
 
                                 <Border.ToolTip>
                                     <TextBlock>
-                                        Date of last backup.<LineBreak/>Red: Item has not yet been backed up.
+                                        Date and time of last scheduled backup.
                                     </TextBlock>
                                 </Border.ToolTip>
 
@@ -310,19 +312,6 @@
                     Width="Auto"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
 
-                    <!--<DataGridTextColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding BackupFrequency, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
-                                    <Setter Property="BorderBrush" Value="Red"/>
-                                    <Setter Property="Foreground" Value="Black"/>
-                                    <Setter Property="Content" Value="1"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-
-                            <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
-                        </Style>
-                    </DataGridTextColumn.CellStyle>-->
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -337,6 +326,11 @@
                             <Setter Property="MaxLength" Value="3"/>
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
 
                 </DataGridTextColumn>
 
@@ -366,6 +360,14 @@
                                         <Setter Property="VerticalContentAlignment" Value="Center"/>
                                     </Style>
                                 </ComboBox.Resources>
+
+                                <ComboBox.ToolTip>
+                                    <TextBlock>
+                                        Day = 1<LineBreak/>
+                                        Week = 7 days<LineBreak/>
+                                        Month = 30 days
+                                    </TextBlock>
+                                </ComboBox.ToolTip>
                             </ComboBox>
 
                         </DataTemplate>
@@ -384,7 +386,8 @@
                             <xctk:TimePicker
                                 Name="backupTimeOfDay"
                                 Value="{Binding BackupTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                IsReadOnly="False">
+                                IsReadOnly="False"
+                                ToolTip="Time the backup should run at.">
                             </xctk:TimePicker>
 
                         </DataTemplate>
@@ -404,6 +407,7 @@
                                 x:Name="lastBackupDate"
                                 Value="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 Margin="5, 0, 5, 0"
+                                ToolTip="Date and time of the next scheduled backup."
                                 Format="Custom"
                                 FormatString="MM-dd-yyyy hh:mm tt"
                                 UpdateValueOnEnterKey="True"

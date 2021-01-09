@@ -208,7 +208,6 @@ namespace BackItUp.Models
             }
             set
             {
-                Debug.WriteLine("Color changed: " + value);
                 _StatusColor = value;
                 OnPropertyChanged("StatusColor", value.ToString());
             }

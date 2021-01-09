@@ -257,25 +257,13 @@
                                     Grid.Column="0"
                                     x:Name="dateLastBackedUpText"
                                     Text="{Binding LastBackupDate, Mode=OneWay,
-                                    UpdateSourceTrigger=PropertyChanged,
-                                    StringFormat=MM-dd-yyyy hh:mm tt}"
+                                        UpdateSourceTrigger=PropertyChanged,
+                                        StringFormat=MM-dd-yyyy hh:mm tt}"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Center"
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 5, 0"
                                     Width="Auto">
-
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger
-                                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                    Value="False">
-                                                    <Setter Property="Text" Value="Never"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
                                 </TextBlock>
 
                                 <Border.ToolTip>
@@ -283,20 +271,17 @@
                                         Date and time of last scheduled backup.
                                     </TextBlock>
                                 </Border.ToolTip>
-
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Style.Triggers>
-                                            <DataTrigger
-                                                Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                Value="False">
-                                                <Setter Property="Background" Value="LightPink"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
                             </Border>
-
+                            
+                            <DataTemplate.Triggers>
+                                <DataTrigger
+                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                    Value="False">
+                                    <Setter TargetName="dateLastBackedUpBorderBox" Property="Background" Value="LightPink"/>
+                                    <Setter TargetName="dateLastBackedUpText" Property="TextBlock.Text" Value="Never"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                            
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

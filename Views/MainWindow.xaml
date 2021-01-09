@@ -262,6 +262,18 @@
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 5, 0"
                                     Width="Auto">
+                                    
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                    Value="False">
+                                                    <Setter Property="Text" Value="Never"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
                                 </TextBlock>
 
                                 <Border.ToolTip>
@@ -269,16 +281,19 @@
                                         Date of last backup.<LineBreak/>Red: Item has not yet been backed up.
                                     </TextBlock>
                                 </Border.ToolTip>
-                            </Border>
 
-                            <DataTemplate.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="False">
-                                    <Setter TargetName="dateLastBackedUpBorderBox" Property="Background" Value="LightPink"/>
-                                    <Setter TargetName="dateLastBackedUpText" Property="TextBlock.Text" Value="Never"/>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger
+                                                Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                Value="False">
+                                                <Setter Property="Background" Value="LightPink"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
 
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -407,6 +422,7 @@
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
+                            
                             <Border
                                 x:Name="backupEnabledBorderBox">
                                 <CheckBox
@@ -429,30 +445,12 @@
                                     <TextBlock Text="{Binding StatusMessage}"/>
                                 </Border.ToolTip>
 
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{Binding StatusColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Style>
+                                </Border.Style>
                             </Border>
-
-                            <DataTemplate.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="0">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightPink"/>
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="1">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightGreen"/>
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="2">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightBlue"/>
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding StatusCode, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="3">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="Orange"/>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
 
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

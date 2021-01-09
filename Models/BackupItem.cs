@@ -178,6 +178,7 @@ namespace BackItUp.Models
             {
                 _StatusCode = value;
                 StatusMessage = GetBackupItemStatusCodePairs()[value].Value;
+                StatusColor = GetBackupItemStatusCodeColors()[value].Value;
                 OnPropertyChanged("StatusCode", value.ToString());
             }
         }
@@ -194,6 +195,22 @@ namespace BackItUp.Models
             {
                 _StatusMessage = value;
                 OnPropertyChanged("StatusMessage", value.ToString());
+            }
+        }
+
+        [field: NonSerialized]
+        private string _StatusColor;
+        public string StatusColor
+        {
+            get
+            {
+                return _StatusColor;
+            }
+            set
+            {
+                Debug.WriteLine("Color changed: " + value);
+                _StatusColor = value;
+                OnPropertyChanged("StatusColor", value.ToString());
             }
         }
 

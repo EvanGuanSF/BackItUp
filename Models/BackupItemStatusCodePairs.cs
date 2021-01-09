@@ -25,5 +25,16 @@ namespace BackItUp.Models
                 new KeyValuePair<int, string>(4, "Error")
             };
         }
+
+        public static KeyValuePair<int, string>[] GetBackupItemStatusCodeColors()
+        {
+            return new KeyValuePair<int, string>[]
+            {
+                new KeyValuePair<int, string>(0, "LightPink"),
+                new KeyValuePair<int, string>(1, "LightGreen"),
+                new KeyValuePair<int, string>(2, "LightBlue"),
+                new KeyValuePair<int, string>(4, "Orange")
+            };
+        }
     }
 }

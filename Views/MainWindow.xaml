@@ -256,29 +256,46 @@
                                 <TextBlock 
                                     Grid.Column="0"
                                     x:Name="dateLastBackedUpText"
-                                    Text="{Binding LastBackupDate, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Text="{Binding LastBackupDate, Mode=OneWay,
+                                    UpdateSourceTrigger=PropertyChanged,
+                                    StringFormat=MM-dd-yyyy hh:mm tt}"
                                     VerticalAlignment="Center"
                                     HorizontalAlignment="Center"
                                     TextWrapping="Wrap"
                                     Margin="5, 0, 5, 0"
                                     Width="Auto">
+
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger
+                                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                    Value="False">
+                                                    <Setter Property="Text" Value="Never"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
                                 </TextBlock>
 
                                 <Border.ToolTip>
                                     <TextBlock>
-                                        Date of last backup.<LineBreak/>Red: Item has not yet been backed up.
+                                        Date and time of last scheduled backup.
                                     </TextBlock>
                                 </Border.ToolTip>
-                            </Border>
 
-                            <DataTemplate.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="False">
-                                    <Setter TargetName="dateLastBackedUpBorderBox" Property="Background" Value="LightPink"/>
-                                    <Setter TargetName="dateLastBackedUpText" Property="TextBlock.Text" Value="Never"/>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger
+                                                Binding="{Binding HasBeenBackedUp, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                                Value="False">
+                                                <Setter Property="Background" Value="LightPink"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
 
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -295,19 +312,6 @@
                     Width="Auto"
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
 
-                    <!--<DataGridTextColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding BackupFrequency, Mode=OneWay, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
-                                    <Setter Property="BorderBrush" Value="Red"/>
-                                    <Setter Property="Foreground" Value="Black"/>
-                                    <Setter Property="Content" Value="1"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-
-                            <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
-                        </Style>
-                    </DataGridTextColumn.CellStyle>-->
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />
@@ -322,6 +326,11 @@
                             <Setter Property="MaxLength" Value="3"/>
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTip" Value="Frequnecy of backups in {Period} units."/>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
 
                 </DataGridTextColumn>
 
@@ -336,8 +345,8 @@
 
                             <ComboBox
                                 SelectedValue="{Binding BackupPeriod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                SelectedValuePath="PeriodKey"
-                                DisplayMemberPath="PeriodValue"
+                                SelectedValuePath="Key"
+                                DisplayMemberPath="Value"
                                 SelectedIndex="0"
                                 IsEditable="False">
                                 <ComboBox.Resources>
@@ -351,6 +360,14 @@
                                         <Setter Property="VerticalContentAlignment" Value="Center"/>
                                     </Style>
                                 </ComboBox.Resources>
+
+                                <ComboBox.ToolTip>
+                                    <TextBlock>
+                                        Day = 1<LineBreak/>
+                                        Week = 7 days<LineBreak/>
+                                        Month = 30 days
+                                    </TextBlock>
+                                </ComboBox.ToolTip>
                             </ComboBox>
 
                         </DataTemplate>
@@ -369,7 +386,8 @@
                             <xctk:TimePicker
                                 Name="backupTimeOfDay"
                                 Value="{Binding BackupTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                IsReadOnly="False">
+                                IsReadOnly="False"
+                                ToolTip="Time the backup should run at.">
                             </xctk:TimePicker>
 
                         </DataTemplate>
@@ -389,6 +407,7 @@
                                 x:Name="lastBackupDate"
                                 Value="{Binding NextBackupDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 Margin="5, 0, 5, 0"
+                                ToolTip="Date and time of the next scheduled backup."
                                 Format="Custom"
                                 FormatString="MM-dd-yyyy hh:mm tt"
                                 UpdateValueOnEnterKey="True"
@@ -407,6 +426,7 @@
                     HeaderStyle="{StaticResource CenterGridHeaderStyle}">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
+                            
                             <Border
                                 x:Name="backupEnabledBorderBox">
                                 <CheckBox
@@ -426,27 +446,15 @@
                                 </CheckBox>
 
                                 <Border.ToolTip>
-                                    <TextBlock>
-                                        Green: Task is scheduled.
-                                        <LineBreak/>
-                                        Red: Task is unscheduled.
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding StatusMessage}"/>
                                 </Border.ToolTip>
 
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{Binding StatusColor, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                    </Style>
+                                </Border.Style>
                             </Border>
-
-                            <DataTemplate.Triggers>
-                                <DataTrigger
-                                    Binding="{Binding BackupActive, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="True">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightGreen"/>
-                                </DataTrigger>
-                                <DataTrigger
-                                    Binding="{Binding BackupActive, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                    Value="False">
-                                    <Setter TargetName="backupEnabledBorderBox" Property="Background" Value="LightPink"/>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
 
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

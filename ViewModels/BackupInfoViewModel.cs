@@ -1,25 +1,25 @@
 ﻿using BackItUp.Models;
-using BackItUp.ViewModels.Serialization;
 using BackItUp.ViewModels.Commands;
 using BackItUp.ViewModels.HashCodeGenerator;
+using BackItUp.ViewModels.Serialization;
+using BackItUp.ViewModels.TaskManagement;
 using Ookii.Dialogs.Wpf;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.Windows.Input;
-using BackItUp.ViewModels.TaskManagement;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Windows.Input;
 
 namespace BackItUp.ViewModels
 {
     internal class BackupInfoViewModel : INotifyPropertyChanged
     {
         private static ObservableCollection<BackupItem> _BackupInfo;
-        private static ObservableCollection<BackupPeriodList> _BackupPeriodList;
+        private static ObservableCollection<KeyValuePair<int, string>> _BackupPeriodList;
         private static int _SelectedBackupItemIndex;
         private static BackupInfoViewModel _ActiveViewModel;
         private static bool _IsRunOnStartupEnabled = bool.Parse(ConfigurationManager.AppSettings["RunOnStartup"]);
@@ -121,11 +121,15 @@ namespace BackItUp.ViewModels
         /// <summary>
         /// Gets the backup period list.
         /// </summary>
-        public ObservableCollection<BackupPeriodList> BackupPeriodList
+        public ObservableCollection<KeyValuePair<int, string>> BackupPeriodList
         {
             get
             {
                 return _BackupPeriodList;
+            }
+            private set
+            {
+                _BackupPeriodList = value;
             }
         }
 
@@ -215,68 +219,69 @@ namespace BackItUp.ViewModels
 
         public void ModelPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
+            if (e.PropertyName == "OriginPath" ||
+                e.PropertyName == "BackupPath")
+            {
+                UpdateItemHash((BackupItem)sender);
+            }
             if (e.PropertyName == "BackupFrequency" ||
                 e.PropertyName == "BackupPeriod" ||
                 e.PropertyName == "BackupTime")
             {
-                HandleIntervalChanged();
+                HandleIntervalChanged((BackupItem)sender);
             }
             if(e.PropertyName == "BackupEnabled")
             {
-                QueueJobBySelectedIndex();
+                QueueJobByBackupItem((BackupItem)sender);
             }
             if (e.PropertyName == "NextBackupDate")
             {
-                HandleNextBackupDateChanged();
+                HandleNextBackupDateChanged((BackupItem)sender);
             }
         }
 
         /// <summary>
         /// Update the NextBackupDate of the current item if a new frequency, period, or time of day is specified.
         /// </summary>
-        private void HandleIntervalChanged()
+        private void HandleIntervalChanged(BackupItem itemToUpdate)
         {
-            BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
-
             // Remove any backup jobs associated with the old hash.
-            TaskManager.DequeueBackupJob(selectedItem.HashCode);
+            TaskManager.DequeueBackupJob(itemToUpdate.HashCode);
 
             // Calculate the number of days to add, then create the new DateTime object.
-            int daysToAdd = selectedItem.BackupFrequency * selectedItem.BackupPeriod;
+            int daysToAdd = itemToUpdate.BackupFrequency * itemToUpdate.BackupPeriod;
 
-            DateTime newDateAndTime = new DateTime(selectedItem.LastBackupDate.Year,
-                selectedItem.LastBackupDate.Month,
-                selectedItem.LastBackupDate.Day,
-                selectedItem.BackupTime.Hour,
-                selectedItem.BackupTime.Minute,
+            DateTime newDateAndTime = new DateTime(itemToUpdate.LastBackupDate.Year,
+                itemToUpdate.LastBackupDate.Month,
+                itemToUpdate.LastBackupDate.Day,
+                itemToUpdate.BackupTime.Hour,
+                itemToUpdate.BackupTime.Minute,
                 00).AddDays(daysToAdd);
 
             // Update the NextBackupDate with the new object/value and notify the UI.
-            selectedItem.NextBackupDate = newDateAndTime;
+            itemToUpdate.NextBackupDate = newDateAndTime;
             // Also update the BackupInterval.
-            selectedItem.BackupInterval = new TimeSpan(
+            itemToUpdate.BackupInterval = new TimeSpan(
                 daysToAdd,
-                selectedItem.BackupTime.Hour,
-                selectedItem.BackupTime.Minute,
+                itemToUpdate.BackupTime.Hour,
+                itemToUpdate.BackupTime.Minute,
                 0
                 );
 
-            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
-            QueueJobBySelectedIndex();
+            // Re-enable the job if the BackEnabled is set to true.
+            QueueJobByBackupItem(itemToUpdate);
         }
 
         /// <summary>
         /// If the NextBackupDate itself is changed directly, then just reschedule the backup job.
         /// </summary>
-        private void HandleNextBackupDateChanged()
+        private void HandleNextBackupDateChanged(BackupItem itemToUpdate)
         {
-            BackupItem selectedItem = BackupInfo[SelectedBackupItemIndex];
-
             // Remove any backup jobs associated with the old hash.
-            TaskManager.DequeueBackupJob(selectedItem.HashCode);
+            TaskManager.DequeueBackupJob(itemToUpdate);
 
-            // Call ToggleJobBySelectedIndex() to re-enable the job if the BackEnabled is set to true.
-            QueueJobBySelectedIndex();
+            // Re-enable the job if the BackEnabled is set to true.
+            QueueJobByBackupItem(itemToUpdate);
         }
 
         #endregion
@@ -300,13 +305,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         private void InitBackupPeriodList()
         {
-            _BackupPeriodList = new ObservableCollection<BackupPeriodList>
-            {
-                new BackupPeriodList(1, "Day(s)"),
-                new BackupPeriodList(7, "Week(s)"),
-                new BackupPeriodList(30, "Month(s)")
-            };
-            OnPropertyChanged("BackupPeriodList");
+            BackupPeriodList = new ObservableCollection<KeyValuePair<int, string>>(BackupPeriodPairs.GetBackupPeriodPairs());
         }
 
         #endregion
@@ -320,7 +319,7 @@ namespace BackItUp.ViewModels
         {
             get
             {
-                return _SelectedBackupItemIndex < _BackupInfo.Count;
+                return SelectedBackupItemIndex < BackupInfo.Count;
             }
         }
 
@@ -338,8 +337,6 @@ namespace BackItUp.ViewModels
             TaskManager.DequeueBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
 
             BackupInfo[SelectedBackupItemIndex].OriginPath = filePath;
-
-            UpdateItemHash();
         }
 
         /// <summary>
@@ -359,8 +356,6 @@ namespace BackItUp.ViewModels
                 folderPath += "\\";
 
             BackupInfo[SelectedBackupItemIndex].OriginPath = folderPath;
-
-            UpdateItemHash();
         }
 
         /// <summary>
@@ -380,8 +375,6 @@ namespace BackItUp.ViewModels
                 folderPath += "\\";
 
             BackupInfo[SelectedBackupItemIndex].BackupPath = folderPath;
-
-            UpdateItemHash();
         }
 
         /// <summary>
@@ -389,12 +382,12 @@ namespace BackItUp.ViewModels
         /// </summary>
         public void DeleteBackupItemBySelectedIndex()
         {
-            if (_SelectedBackupItemIndex == -1)
+            if (SelectedBackupItemIndex == -1)
                 return;
 
             // Remove the selected row.
-            TaskManager.DequeueBackupJob(_BackupInfo[_SelectedBackupItemIndex].HashCode);
-            _BackupInfo.RemoveAt(_SelectedBackupItemIndex);
+            TaskManager.DequeueBackupJob(BackupInfo[SelectedBackupItemIndex].HashCode);
+            BackupInfo.RemoveAt(SelectedBackupItemIndex);
             SelectedBackupItemIndex = BackupInfo.Count - 1;
         }
 
@@ -426,7 +419,7 @@ namespace BackItUp.ViewModels
             {
                 Debug.WriteLine("Removing item from list.");
                 _ActiveViewModel.BackupInfo.Remove(itemToRemove);
-                _ActiveViewModel.SelectedBackupItemIndex = _BackupInfo.Count - 1;
+                _ActiveViewModel.SelectedBackupItemIndex = _ActiveViewModel.BackupInfo.Count - 1;
             }
         }
 
@@ -478,35 +471,35 @@ namespace BackItUp.ViewModels
         /// If either is invalid, reset the hashCode on the item.
         /// </summary>
         /// <param name="index"></param>
-        private void UpdateItemHash()
+        private void UpdateItemHash(BackupItem backupItem)
         {
-            if(!string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].OriginPath) &&
-               !string.IsNullOrWhiteSpace(BackupInfo[_SelectedBackupItemIndex].BackupPath))
+            if(!string.IsNullOrWhiteSpace(backupItem.OriginPath) &&
+               !string.IsNullOrWhiteSpace(backupItem.BackupPath))
             {
-                //Debug.WriteLine(string.Format("Hashing: '{0}' and '{1}'", BackupInfo[_SelectedBackupItemIndex].OriginPath, BackupInfo[_SelectedBackupItemIndex].BackupPath));
+                //Debug.WriteLine(string.Format("Hashing: '{0}' and '{1}'", backupItem.OriginPath, backupItem.BackupPath));
 
                 // Remove the hashcode associated with the current hash before we get rid of it.
-                TaskManager.DequeueBackupJob(BackupInfo[_SelectedBackupItemIndex].HashCode);
+                TaskManager.DequeueBackupJob(backupItem);
 
                 // Then calculate the new hash for the object.
-                BackupInfo[_SelectedBackupItemIndex].HashCode = Hasher.StringHasher(
-                    BackupInfo[_SelectedBackupItemIndex].OriginPath +
-                    BackupInfo[_SelectedBackupItemIndex].BackupPath);
+                backupItem.HashCode = Hasher.StringHasher(
+                    backupItem.OriginPath +
+                    backupItem.BackupPath);
 
                 // Check for duplicate origin and backup path items.
                 if(!ReinitializeDuplicateBackups())
                 {
                     // If there are no duplicates, then check if the item is enabled.
                     // If it is, we need to queue a new job with the new hash.
-                    if(BackupInfo[_SelectedBackupItemIndex].BackupEnabled)
+                    if(backupItem.BackupEnabled)
                     {
-                        TaskManager.QueueBackupJob(BackupInfo[_SelectedBackupItemIndex]);
+                        TaskManager.QueueBackupJob(backupItem);
                     }
                 }
             }
             else
             {
-                BackupInfo[_SelectedBackupItemIndex].HashCode = "";
+                backupItem.HashCode = "";
             }
         }
 
@@ -525,7 +518,7 @@ namespace BackItUp.ViewModels
             {
                 if(newHashCode == BackupInfo[i].HashCode)
                 {
-                    BackupInfo[_SelectedBackupItemIndex].LoadDefaultValues();
+                    BackupInfo[SelectedBackupItemIndex].LoadDefaultValues();
                     return true;
                 }
             }
@@ -540,11 +533,11 @@ namespace BackItUp.ViewModels
         {
             BackupItem itemToUpdate = null;
 
-            foreach(BackupItem itm in _BackupInfo)
+            foreach(BackupItem backupItem in _ActiveViewModel.BackupInfo)
             {
-                if(itm.HashCode == hashCode)
+                if(backupItem.HashCode == hashCode)
                 {
-                    itemToUpdate = itm;
+                    itemToUpdate = backupItem;
                     break;
                 }
             }
@@ -565,8 +558,6 @@ namespace BackItUp.ViewModels
 
             // Update the NextBackupDate with the new object/value and notify the UI.
             itemToUpdate.NextBackupDate = newDateAndTime;
-
-            _ActiveViewModel.OnPropertyChanged("BackupInfo");
         }
 
         /// <summary>
@@ -603,7 +594,7 @@ namespace BackItUp.ViewModels
         /// </summary>
         public static void QueueJobBySelectedIndex()
         {
-            BackupItem currentItem = _ActiveViewModel.BackupInfo[_SelectedBackupItemIndex];
+            BackupItem currentItem = _ActiveViewModel.BackupInfo[_ActiveViewModel.SelectedBackupItemIndex];
 
             if(currentItem.BackupEnabled)
             {
@@ -620,6 +611,63 @@ namespace BackItUp.ViewModels
             else
             {
                 TaskManager.DequeueBackupJob(currentItem.HashCode);
+            }
+        }
+
+        /// <summary>
+        /// Toggles the job associated to the BackupItem with given hashCode.
+        /// </summary>
+        public static void QueueJobByHashCode(string hashCode)
+        {
+            if (string.IsNullOrWhiteSpace(hashCode) || hashCode.Length != 64)
+                return;
+
+            foreach (BackupItem currentItem in _ActiveViewModel.BackupInfo)
+            {
+                if(currentItem.HashCode == hashCode && currentItem.BackupEnabled)
+                {
+                    // We do not know how long ago the previous job was de-activated.
+                    // If the job is enabled and the date has passed, the copy job will run immediately.
+                    // To prevent this, recalculate the next backup date of the newly enabled item if its NextBackupDate is before the current date and time.
+                    // Keep going until the NextBackupDate is after the current date and time if necessary.
+                    while (currentItem.NextBackupDate < DateTime.Now)
+                    {
+                        UpdateNextBackupDate(currentItem.HashCode);
+                    }
+                    TaskManager.QueueBackupJob(currentItem);
+
+                    return;
+                }
+            }
+            // If there is no such hash code, then delete the job from the TaskManager.
+            TaskManager.DequeueBackupJob(hashCode);
+        }
+
+        /// <summary>
+        /// Toggles the job associated to the BackupItem with given BackupItem.
+        /// </summary>
+        public static void QueueJobByBackupItem(BackupItem backupItem)
+        {
+            if (backupItem == null || string.IsNullOrWhiteSpace(backupItem.HashCode) || backupItem.HashCode.Length != 64)
+                return;
+
+            if (backupItem.BackupEnabled)
+            {
+                // We do not know how long ago the previous job was de-activated.
+                // If the job is enabled and the date has passed, the copy job will run immediately.
+                // To prevent this, recalculate the next backup date of the newly enabled item if its NextBackupDate is before the current date and time.
+                // Keep going until the NextBackupDate is after the current date and time if necessary.
+                while (backupItem.NextBackupDate < DateTime.Now)
+                {
+                    UpdateNextBackupDate(backupItem.HashCode);
+                }
+                TaskManager.QueueBackupJob(backupItem);
+
+                return;
+            }
+            else
+            {
+                TaskManager.DequeueBackupJob(backupItem.HashCode);
             }
         }
 
@@ -678,8 +726,8 @@ namespace BackItUp.ViewModels
         /// Sets a property on a BackupItem indicating whether or not it has a running job associated with it.
         /// </summary>
         /// <param name="hashCode"></param>
-        /// <param name="isActive"></param>
-        public static void SetBackupItemActive(string hashCode, bool isActive)
+        /// <param name="statusCode"></param>
+        public static void SetBackupItemStatus(string hashCode, int statusCode)
         {
             foreach (BackupItem item in _ActiveViewModel.BackupInfo)
             {
@@ -688,7 +736,7 @@ namespace BackItUp.ViewModels
                     item.HashCode == hashCode)
                 {
                     //Debug.WriteLine(string.Format("{0} is now {1}", hashCode, isActive == true ? "active" : "inactive"));
-                    item.BackupActive = isActive;
+                    item.StatusCode = statusCode;
                     break;
                 }
             }

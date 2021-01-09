@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using static BackItUp.Models.BackupItemStatusCodePairs;
 
 namespace BackItUp.ViewModels.TaskManagement.Jobs
 {
@@ -12,6 +13,9 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
         public async Task Execute(IJobExecutionContext context)
         {
             Debug.WriteLine(string.Format("'{0}' tick: {1}", context.JobDetail.Key.Name.ToString().Substring(0, 5), DateTime.Now));
+
+            // Notify the UI that the job is now running.
+            BackupInfoViewModel.SetBackupItemStatus(context.JobDetail.Key.Name.ToString(), (int)StatusCodes.RUNNING);
 
             JobDataMap dataMap = context.JobDetail.JobDataMap;
 
@@ -49,6 +53,9 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
                 catch (Exception e)
                 {
                     Debug.WriteLine("Error in BackupJob.Execute() folder " + e.Message);
+
+                    // Notify the UI that the job has errored.
+                    BackupInfoViewModel.SetBackupItemStatus(context.JobDetail.Key.Name.ToString(), (int)StatusCodes.ERROR);
                 }
             }
             else
@@ -60,9 +67,9 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
 
                     RoboCommand roboCopy = new RoboCommand();
 
-                    Debug.WriteLine(Path.GetDirectoryName(originPath));
-                    Debug.WriteLine(backupPath);
-                    Debug.WriteLine(Path.GetFileName(originPath));
+                    //Debug.WriteLine(Path.GetDirectoryName(originPath));
+                    //Debug.WriteLine(backupPath);
+                    //Debug.WriteLine(Path.GetFileName(originPath));
 
                     // Copy options
                     roboCopy.CopyOptions.Source = Path.GetDirectoryName(originPath);
@@ -84,6 +91,9 @@ namespace BackItUp.ViewModels.TaskManagement.Jobs
                 catch (Exception e)
                 {
                     Debug.WriteLine("Error in BackupJob.Execute() file" + e.Message);
+
+                    // Notify the UI that the job has errored.
+                    BackupInfoViewModel.SetBackupItemStatus(context.JobDetail.Key.Name.ToString(), (int)StatusCodes.ERROR);
                 }
             }
             Debug.WriteLine(string.Format("Copy job '{0}' completed at: {1}", context.JobDetail.Key.Name.ToString().Substring(0, 5), DateTime.Now));

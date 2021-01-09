@@ -5,6 +5,7 @@ using Quartz.Impl;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using static BackItUp.Models.BackupItemStatusCodePairs;
 
 namespace BackItUp.ViewModels.TaskManagement
 {
@@ -96,7 +97,7 @@ namespace BackItUp.ViewModels.TaskManagement
                 await scheduler.ScheduleJob(job, trigger);
 
                 // Update the BackupItem to indicate that its BackupJob has been successfully queued.
-                BackupInfoViewModel.SetBackupItemActive(backupItem.HashCode, true);
+                BackupInfoViewModel.SetBackupItemStatus(backupItem.HashCode, (int)StatusCodes.QUEUED);
 
                 BackupInfoViewModel.SaveConfig();
                 
@@ -114,7 +115,7 @@ namespace BackItUp.ViewModels.TaskManagement
         /// Remove a backup job from the jobs pool with given BackupItem HashCode.
         /// </summary>
         /// <param name="backupItemHashCode"></param>
-        public static async void DequeueBackupJob(string backupItemHashCode)
+        public static async Task DequeueBackupJob(string backupItemHashCode)
         {
             // First, check the backupItemHashCode to make sure it is something that is usable.
             if (string.IsNullOrWhiteSpace(backupItemHashCode) ||
@@ -132,7 +133,7 @@ namespace BackItUp.ViewModels.TaskManagement
                 if (await scheduler.CheckExists(jobToCheck))
                 {
                     await scheduler.DeleteJob(jobToCheck);
-                    BackupInfoViewModel.SetBackupItemActive(backupItemHashCode, false);
+                    BackupInfoViewModel.SetBackupItemStatus(backupItemHashCode, (int)StatusCodes.UNQUEUED);
                 }
 
                 BackupInfoViewModel.SaveConfig();
@@ -142,6 +143,15 @@ namespace BackItUp.ViewModels.TaskManagement
             {
                 Debug.WriteLine("RemoveBackupJob: " + e.Message);
             }
+        }
+
+        /// <summary>
+        /// Remove a backup job from the jobs pool with given BackupItem.
+        /// </summary>
+        /// <param name="backupItemHashCode"></param>
+        public static async void DequeueBackupJob(BackupItem backupItem)
+        {
+            await DequeueBackupJob(backupItem.HashCode);
         }
 
         #endregion
